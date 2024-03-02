@@ -23,11 +23,11 @@ class TransactionVerificationService(transaction_verification_grpc.TransactionVe
         # print("User Name:", request.user.name)
         # print("User Contact:", request.user.contact)
 
-        if not request.user or not request.user.name or not request.user.contact:
+        if not request.transaction.user or not request.transaction.user.name or not request.transaction.user.contact:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details('Missing user name or contact')
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message='Missing user name or contact')
-        if not re.match(r'^[0-9]{16}$', request.credit_card.number): 
+        if not re.match(r'^[0-9]{16}$', request.transaction.credit_card.number): 
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Invalid credit card number.")
         return transaction_verification.VerifyTransactionResponse(is_valid=True)
 
