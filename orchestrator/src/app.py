@@ -89,6 +89,16 @@ def verify_transaction(transaction_data):
         # Handle unexpected errors
         return {'is_valid': False, 'error_message': 'An error occurred during processing: ' + str(e)}
 
+
+
+def getBookSuggestions(id):
+    with grpc.insecure_channel('suggestions_service:50053') as channel:
+        # Create a stub object.
+        stub = suggestions_service_grpc.SuggestionsServiceStub(channel)
+        # Call the service through the stub object.
+        response = stub.getSuggestions(suggestions_service.getSuggestionsRequest(bookid = id))
+    return response.items
+
 # Import Flask.
 # Flask is a web framework for Python.
 # It allows you to build a web application quickly.
@@ -123,8 +133,10 @@ def checkout():
     print("Request Data:", request.json)
 
     verification_response = verify_transaction(data)
+    print(verification_response)
+    print(getBookSuggestions(data['items'][0]['id']))
 
-    if verification_response.is_valid:
+    if verification_response["is_valid"]:
         order_status_response = {
         'orderId': '12345',
         'status': "Order Approved",

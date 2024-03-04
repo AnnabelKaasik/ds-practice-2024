@@ -1,15 +1,21 @@
 syntax = "proto3";
 
-package hello2;
+package suggestions;
 
-service HelloService {
-    rpc SayHello (HelloRequest) returns (HelloResponse);
+service SuggestionsService {
+    rpc getSuggestions (getSuggestionsRequest) returns (SuggestionsResponse);
 }
 
-message HelloRequest {
-    string name = 1;
+message Book {
+    string bookid = 1;
+    string title = 2;
+    string author = 3;
 }
 
-message HelloResponse {
-    string greeting = 1;
+message getSuggestionsRequest{
+    string bookid = 1;
+}
+
+message SuggestionsResponse {
+    repeated Book items = 1;
 }

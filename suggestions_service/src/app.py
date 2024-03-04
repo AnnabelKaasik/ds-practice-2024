@@ -1,5 +1,6 @@
 import sys
 import os
+import json
 
 # This set of lines are needed to import the gRPC stubs.
 # The path of the stubs is relative to the current file, or absolute inside the container.
@@ -13,25 +14,31 @@ import suggestions_service_pb2_grpc as suggestions_service_grpc
 import grpc
 from concurrent import futures
 
-# Create a class to define the server functions, derived from
-# fraud_detection_pb2_grpc.HelloServiceServicer
-class HelloService(suggestions_service_grpc.HelloServiceServicer):
-    # Create an RPC function to say hello
-    def SayHello(self, request, context):
-        # Create a HelloResponse object
-        response = suggestions_service.HelloResponse()
-        # Set the greeting field of the response object
-        response.greeting = "Hello, " + request.name
-        # Print the greeting message
-        print(response.greeting)
-        # Return the response object
-        return response
+books = {"1":{"title":"Learning Python","author":"John Smith"},
+         "2":{"title":"JavaScript - The Good Parts","author":"Jane Doe"},
+         "3":{"title":"Domain-Driven Design: Tackling Complexity in the Heart of Software","author":"Eric Evans"},
+         "4":{"title":"Design Patterns: Elements of Reusable Object-Oriented Software","author":"Erich Gamma, Richard Helm, Ralph Johnson, & John Vlissides"}
+         }
+
+
+
+class SuggestionsService(suggestions_service_grpc.SuggestionsServiceServicer):
+    
+    def getSuggestions(self, request, context):
+        suggestions = [i for i in books if request.bookid != i]
+        
+        response = []
+        for i in suggestions[:3]:
+            response.append(suggestions_service.Book(bookid = i, title=books[i]["title"], author=books[i]["author"]))
+        return suggestions_service.SuggestionsResponse(items=response)
+        
+    
 
 def serve():
     # Create a gRPC server
     server = grpc.server(futures.ThreadPoolExecutor())
     # Add HelloService
-    suggestions_service_grpc.add_HelloServiceServicer_to_server(HelloService(), server)
+    suggestions_service_grpc.add_SuggestionsServiceServicer_to_server(SuggestionsService(), server)
     # Listen on port 50053
     port = "50053"
     server.add_insecure_port("[::]:" + port)
