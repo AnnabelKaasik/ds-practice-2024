@@ -24,28 +24,6 @@ import transaction_verification_pb2_grpc as transaction_verification_grpc
 
 import grpc
 
-def greet(name='you'):
-    # Establish a connection with the fraud-detection gRPC service.
-    with grpc.insecure_channel('fraud_detection:50051') as channel:
-        # Create a stub object.
-        stub = fraud_detection_grpc.HelloServiceStub(channel)
-        # Call the service through the stub object.
-        response1 = stub.SayHello(fraud_detection.HelloRequest(name=name))
-    
-    with grpc.insecure_channel('suggestions_service:50053') as channel:
-        # Create a stub object.
-        stub = suggestions_service_grpc.HelloServiceStub(channel)
-        # Call the service through the stub object.
-        response2 = stub.SayHello(suggestions_service.HelloRequest(name=name))
-
-    # with grpc.insecure_channel('transaction_verification:50052') as channel:
-    #     # Create a stub object.
-    #     stub = transaction_verification_grpc.HelloServiceStub(channel)
-    #     # Call the service through the stub object.
-    #     response3 = stub.SayHello(transaction_verification.HelloRequest(name=name))
-    return response1.greeting + response2.greeting
-
-
 
 def verify_transaction(transaction_data):
     
@@ -99,6 +77,17 @@ def getBookSuggestions(id):
         response = stub.getSuggestions(suggestions_service.getSuggestionsRequest(bookid = id))
     return response.items
 
+
+def detectFraud(total_qty):
+    # Connect to the fraud detection service.
+    with grpc.insecure_channel('fraud_detection:50051') as channel:
+        # Create a stub object.
+        stub = fraud_detection_grpc.FraudDetectionServiceStub(channel)
+        # Call the service through the stub object.
+        response = stub.FraudDetection(fraud_detection.FraudRequest(total_qty=total_qty))
+    return response.message
+
+
 # Import Flask.
 # Flask is a web framework for Python.
 # It allows you to build a web application quickly.
@@ -117,8 +106,7 @@ def index():
     """
     Responds with 'Hello, [name]' when a GET request is made to '/' endpoint.
     """
-    # Test the fraud-detection gRPC service.
-    response = greet(name='orchestrator')
+    response = 'Hello, World!'
     # Return the response.
     return response
 
@@ -135,6 +123,7 @@ def checkout():
     verification_response = verify_transaction(data)
     print(verification_response)
     print(getBookSuggestions(data['items'][0]['id']))
+    print(detectFraud(data['items'][0]['quantity']))
 
     if verification_response["is_valid"]:
         order_status_response = {
