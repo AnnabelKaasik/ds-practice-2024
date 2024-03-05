@@ -18,33 +18,17 @@ import re
 
 class TransactionVerificationService(transaction_verification_grpc.TransactionVerificationServiceServicer):
     def VerifyTransaction(self, request, context):
-        # print("Request received:", request)
-        # print(" plaplapla")
-        # print("User Name:", request.user.name)
-        # print("User Contact:", request.user.contact)
-
+        
+        # Check for user name and contact
         if not request.transaction.user or not request.transaction.user.name or not request.transaction.user.contact:
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details('Missing user name or contact')
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message='Missing user name or contact')
+        # Check is credit card number is 16 digits
         if not re.match(r'^[0-9]{16}$', request.transaction.credit_card.number): 
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Invalid credit card number.")
         return transaction_verification.VerifyTransactionResponse(is_valid=True)
 
-
-# # Create a class to define the server functions, derived from
-# # fraud_detection_pb2_grpc.HelloServiceServicer
-# class HelloService(transaction_verification_grpc.HelloServiceServicer):
-#     # Create an RPC function to say hello
-#     def SayHello(self, request, context):
-#         # Create a HelloResponse object
-#         response = transaction_verification.HelloResponse()
-#         # Set the greeting field of the response object
-#         response.greeting = "Hello, " + request.name
-#         # Print the greeting message
-#         print(response.greeting)
-#         # Return the response object
-#         return response
 
 def serve():
     # Create a gRPC server

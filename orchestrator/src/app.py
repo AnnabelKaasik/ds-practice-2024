@@ -26,47 +26,32 @@ import grpc
 
 
 def verify_transaction(transaction_data):
-    
-    
-    try: 
-        required_fields = [
-            # 'user', 
-            'creditCard', 'items', 'termsAndConditionsAccepted']
-        missing_fields = [field for field in required_fields if field not in transaction_data]
-        if missing_fields:
-            return {'is_valid': False, 'error_message': 'Missing required fields: ' + ', '.join(missing_fields)}
-
     # Connects to transaction verification service and sends the data to verification
-        with grpc.insecure_channel('transaction_verification:50052') as channel:
-            stub = transaction_verification_grpc.TransactionVerificationServiceStub(channel)
+    with grpc.insecure_channel('transaction_verification:50052') as channel:
+        stub = transaction_verification_grpc.TransactionVerificationServiceStub(channel)
 
-            # Make data suitable for proto file
-            transaction = transaction_verification.Transaction(
-                user=transaction_verification.User(
-                    name=transaction_data['user']['name'],
-                    contact=transaction_data['user']['contact']
-                ),
-                credit_card=transaction_verification.CreditCard(
-                    number=transaction_data['creditCard']['number'],
-                    expirationDate=transaction_data['creditCard']['expirationDate'],
-                    cvv=transaction_data['creditCard']['cvv']
-                ),
-                items=[
-                    transaction_verification.Item(name=item['name'], quantity=item['quantity'])
-                    for item in transaction_data.get('items', [])
-                ],
-                terms_and_conditions_accepted=transaction_data['termsAndConditionsAccepted'],
+        # Make data suitable for proto file
+        transaction_data = transaction_verification.Transaction(
+            user=transaction_verification.User(
+                name=transaction_data['user']['name'],
+                contact=transaction_data['user']['contact']
+            ),
+            credit_card=transaction_verification.CreditCard(
+                number=transaction_data['creditCard']['number'],
+                expirationDate=transaction_data['creditCard']['expirationDate'],
+                cvv=transaction_data['creditCard']['cvv']
             )
-            
-            # verification request
-            request = transaction_verification.VerifyTransactionRequest(transaction=transaction)
-            response = stub.VerifyTransaction(request)
-            return {'is_valid': response.is_valid, 'error_message': response.error_message if not response.is_valid else ''}
+        #     ,items=[
+        #         transaction_verification.Item(name=item['name'], quantity=item['quantity'])
+        #         for item in transaction_data.get('items', [])
+        #     ],
+        #     terms_and_conditions_accepted=transaction_data['termsAndConditionsAccepted'],
+        )
         
-    except Exception as e:
-        # Handle unexpected errors
-        return {'is_valid': False, 'error_message': 'An error occurred during processing: ' + str(e)}
-
+        # verification request
+        response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(transaction=transaction_data))
+        return {'is_valid': response.is_valid, 'error_message': response.error_message if not response.is_valid else ''}
+    
 
 
 def getBookSuggestions(id):
@@ -117,41 +102,33 @@ def checkout():
     """
 
     data = request.json
+    
     # Print request object data
     print("Request Data:", request.json)
-
+    
     verification_response = verify_transaction(data)
-    print(verification_response)
+    # fraud_response = detectFraud(data['items'][0]['quantity'])
     print(getBookSuggestions(data['items'][0]['id']))
     print(detectFraud(data['items'][0]['quantity']))
 
+    book_suggestions = getBookSuggestions(data['items'][0]['id'])
+
     if verification_response["is_valid"]:
+    # and fraud_response["is_valid"]:
         order_status_response = {
         'orderId': '12345',
         'status': "Order Approved",
         'suggestedBooks': [
-            {'bookId': '123', 'title': 'Dummy Book 1', 'author': 'Author 1'},
-            {'bookId': '456', 'title': 'Dummy Book 2', 'author': 'Author 2'}
-        ]
+        {'bookId': book.bookid, 'title': book.title, 'author': book.author}
+        for book in book_suggestions
+    ]
     }
     else:
         order_status_response = {
         'orderId': '12345',
-        'status': "Order Rejected",
-        'suggestedBooks': [
-            {'bookId': '123', 'title': 'Dummy Book 1', 'author': 'Author 1'},
-            {'bookId': '456', 'title': 'Dummy Book 2', 'author': 'Author 2'}
-        ]
+        'status': "Order Rejected"
     }
-    # Dummy response following the provided YAML specification for the bookstore
-    # order_status_response = {
-    #     'orderId': '12345',
-    #     'status': "",
-    #     'suggestedBooks': [
-    #         {'bookId': '123', 'title': 'Dummy Book 1', 'author': 'Author 1'},
-    #         {'bookId': '456', 'title': 'Dummy Book 2', 'author': 'Author 2'}
-    #     ]
-    # }
+        
     print(order_status_response)
     return jsonify(order_status_response)
 

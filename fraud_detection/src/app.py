@@ -20,6 +20,7 @@ class FraudDetectionService(fraud_detection_grpc.FraudDetectionServiceServicer):
         response = fraud_detection.FraudResponse()
         if request.total_qty > 100:
             response.is_fraud = True
+            # response.is_valid = False
             response.message = "Transaction is fraud"
             
         else:
