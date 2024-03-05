@@ -41,16 +41,11 @@ def verify_transaction(transaction_data):
                 expirationDate=transaction_data['creditCard']['expirationDate'],
                 cvv=transaction_data['creditCard']['cvv']
             )
-        #     ,items=[
-        #         transaction_verification.Item(name=item['name'], quantity=item['quantity'])
-        #         for item in transaction_data.get('items', [])
-        #     ],
-        #     terms_and_conditions_accepted=transaction_data['termsAndConditionsAccepted'],
         )
         
         # verification request
         response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(transaction=transaction_data))
-        return {'is_valid': response.is_valid, 'error_message': response.error_message if not response.is_valid else ''}
+        return response
     
 
 
@@ -70,7 +65,7 @@ def detectFraud(total_qty):
         stub = fraud_detection_grpc.FraudDetectionServiceStub(channel)
         # Call the service through the stub object.
         response = stub.FraudDetection(fraud_detection.FraudRequest(total_qty=total_qty))
-    return response.message
+    return response
 
 
 # Import Flask.
@@ -107,14 +102,14 @@ def checkout():
     print("Request Data:", request.json)
     
     verification_response = verify_transaction(data)
-    # fraud_response = detectFraud(data['items'][0]['quantity'])
-    print(getBookSuggestions(data['items'][0]['id']))
-    print(detectFraud(data['items'][0]['quantity']))
-
+    fraud_response = detectFraud(data['items'][0]['quantity'])
     book_suggestions = getBookSuggestions(data['items'][0]['id'])
+    
+    print("Verification Response:", verification_response)
+    print("Fraud Response:", fraud_response)
+    print("Book Suggestions:", book_suggestions)
 
-    if verification_response["is_valid"]:
-    # and fraud_response["is_valid"]:
+    if verification_response.is_valid and fraud_response.is_valid:
         order_status_response = {
         'orderId': '12345',
         'status': "Order Approved",
@@ -129,7 +124,6 @@ def checkout():
         'status': "Order Rejected"
     }
         
-    print(order_status_response)
     return jsonify(order_status_response)
 
 
