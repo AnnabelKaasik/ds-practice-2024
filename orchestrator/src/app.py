@@ -1,5 +1,8 @@
 import sys
 import os
+from concurrent.futures import ThreadPoolExecutor
+from jsonschema import validate
+import json
 
 # This set of lines are needed to import the gRPC stubs.
 # The path of the stubs is relative to the current file, or absolute inside the container.
@@ -49,7 +52,8 @@ def verify_transaction(transaction_data):
     
 
 
-def getBookSuggestions(id):
+def getBookSuggestions(data):
+    id = data['items'][0]['id']
     with grpc.insecure_channel('suggestions_service:50053') as channel:
         # Create a stub object.
         stub = suggestions_service_grpc.SuggestionsServiceStub(channel)
@@ -58,8 +62,9 @@ def getBookSuggestions(id):
     return response.items
 
 
-def detectFraud(total_qty):
+def detectFraud(data):
     # Connect to the fraud detection service.
+    total_qty = data['items'][0]['quantity']
     with grpc.insecure_channel('fraud_detection:50051') as channel:
         # Create a stub object.
         stub = fraud_detection_grpc.FraudDetectionServiceStub(channel)
@@ -79,6 +84,8 @@ from flask_cors import CORS
 app = Flask(__name__)
 # Enable CORS for the app.
 CORS(app)
+
+
 
 # Define a GET endpoint.
 @app.route('/', methods=['GET'])
@@ -101,10 +108,31 @@ def checkout():
     # Print request object data
     print("Request Data:", request.json)
     
-    verification_response = verify_transaction(data)
-    fraud_response = detectFraud(data['items'][0]['quantity'])
-    book_suggestions = getBookSuggestions(data['items'][0]['id'])
+    with open('orchestrator/src/schema.json') as f:
+        schema = json.load(f)
+        
+    try:
+        validate(instance=data, schema=schema)
+    except Exception as e:
+        print(f"Schema validation failed: {e}")
+        return {"error": {"code": "400","message": f"Schema validation failed: {e}"}}, 400
     
+
+    functions = [verify_transaction, detectFraud, getBookSuggestions]
+    
+    try:
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit tasks to the thread pool
+            futures = [executor.submit(f, data) for f in functions]
+            
+            # Wait for all tasks to complete
+            verification_response, fraud_response, book_suggestions = [future.result() for future in futures]
+    except Exception as e:
+        print(e)
+        return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+
+
+
     print("Verification Response:", verification_response)
     print("Fraud Response:", fraud_response)
     print("Book Suggestions:", book_suggestions)
@@ -124,7 +152,7 @@ def checkout():
         'status': "Order Rejected"
     }
         
-    return jsonify(order_status_response)
+    return order_status_response, 200
 
 
 if __name__ == '__main__':

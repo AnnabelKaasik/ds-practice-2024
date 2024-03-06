@@ -25,7 +25,6 @@ class FraudDetectionService(fraud_detection_grpc.FraudDetectionServiceServicer):
         else:
             response.is_valid = True
             response.message = "Transaction is valid"
-            
         return response
 
 

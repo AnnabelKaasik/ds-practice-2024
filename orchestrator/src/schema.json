@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+      "user": {
+          "type": "object",
+          "properties": {
+              "name": {
+                  "type": "string"
+              },
+              "contact": {
+                  "type": "string"
+              }
+          },
+          "required": [
+              "name",
+              "contact"
+          ]
+      },
+      "creditCard": {
+          "type": "object",
+          "properties": {
+              "number": {
+                  "type": "string"
+              },
+              "expirationDate": {
+                  "type": "string"
+              },
+              "cvv": {
+                  "type": "string"
+              }
+          },
+          "required": [
+              "number",
+              "expirationDate",
+              "cvv"
+          ]
+      },
+      "userComment": {
+          "type": "string"
+      },
+      "items": {
+          "type": "array",
+          "items": [
+              {
+                  "type": "object",
+                  "properties": {
+                      "id": {
+                          "type": "string"
+                      },
+                      "name": {
+                          "type": "string"
+                      },
+                      "quantity": {
+                          "type": "integer"
+                      }
+                  },
+                  "required": [
+                      "id",
+                      "name",
+                      "quantity"
+                  ]
+              }
+          ]
+      },
+      "discountCode": {
+          "type": "string"
+      },
+      "shippingMethod": {
+          "type": "string"
+      },
+      "giftMessage": {
+          "type": "string"
+      },
+      "billingAddress": {
+          "type": "object",
+          "properties": {
+              "street": {
+                  "type": "string"
+              },
+              "city": {
+                  "type": "string"
+              },
+              "state": {
+                  "type": "string"
+              },
+              "zip": {
+                  "type": "string"
+              },
+              "country": {
+                  "type": "string"
+              }
+          },
+          "required": [
+              "street",
+              "city",
+              "state",
+              "zip",
+              "country"
+          ]
+      },
+      "giftWrapping": {
+          "type": "boolean"
+      },
+      "termsAndConditionsAccepted": {
+          "type": "boolean"
+      },
+      "notificationPreferences": {
+          "type": "array",
+          "items": [
+              {
+                  "type": "string"
+              }
+          ]
+      },
+      "device": {
+          "type": "object",
+          "properties": {
+              "type": {
+                  "type": "string"
+              },
+              "model": {
+                  "type": "string"
+              },
+              "os": {
+                  "type": "string"
+              }
+          },
+          "required": [
+              "type",
+              "model",
+              "os"
+          ]
+      },
+      "browser": {
+          "type": "object",
+          "properties": {
+              "name": {
+                  "type": "string"
+              },
+              "version": {
+                  "type": "string"
+              }
+          },
+          "required": [
+              "name",
+              "version"
+          ]
+      },
+      "appVersion": {
+          "type": "string"
+      },
+      "screenResolution": {
+          "type": "string"
+      },
+      "referrer": {
+          "type": "string"
+      },
+      "deviceLanguage": {
+          "type": "string"
+      }
+  },
+  "required": [
+      "user",
+      "creditCard",
+      "items",
+      "shippingMethod",
+      "giftMessage",
+      "billingAddress",
+      "termsAndConditionsAccepted",
+      "notificationPreferences",
+      "device",
+      "browser",
+      "appVersion",
+      "screenResolution",
+      "referrer",
+      "deviceLanguage"
+  ]
+}
