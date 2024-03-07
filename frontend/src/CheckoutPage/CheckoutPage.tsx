@@ -76,7 +76,7 @@ const CheckoutPage: React.FC = () => {
                     {
                         id: book.id,
                         name: book.title,
-                        quantity: 1,
+                        quantity: book.quantityAdjustment,
                     },
                 ],
                 discountCode: formData.discountCode,
