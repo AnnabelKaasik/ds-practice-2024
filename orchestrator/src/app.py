@@ -93,6 +93,7 @@ def index():
     """
     Responds with 'Hello, [name]' when a GET request is made to '/' endpoint.
     """
+    print("Log: Received a GET request")
     response = 'Hello, World!'
     # Return the response.
     return response
@@ -102,11 +103,10 @@ def checkout():
     """
     Responds with a JSON object containing the order ID, status, and suggested books.
     """
-
+    print("LOG: Recieved a POST request on /checkour endpoint")
     data = request.json
-    
-    # Print request object data
-    print("Request Data:", request.json)
+    print(f"LOG: Request data: {data}")
+
     
     with open('orchestrator/src/schema.json') as f:
         schema = json.load(f)
@@ -114,13 +114,14 @@ def checkout():
     try:
         validate(instance=data, schema=schema)
     except Exception as e:
-        print(f"Schema validation failed: {e}")
+        print(f"LOG: Schema validation failed: {e}")
         return {"error": {"code": "400","message": f"Schema validation failed: {e}"}}, 400
     
 
     functions = [verify_transaction, detectFraud, getBookSuggestions]
     
     try:
+        print("LOG: Starting paralles processing of microservices")
         with ThreadPoolExecutor(max_workers=3) as executor:
             # Submit tasks to the thread pool
             futures = [executor.submit(f, data) for f in functions]
@@ -128,14 +129,14 @@ def checkout():
             # Wait for all tasks to complete
             verification_response, fraud_response, book_suggestions = [future.result() for future in futures]
     except Exception as e:
-        print(e)
+        print(f"LOG: Error during paralles processing of microservices {e}")
         return {"error": {"code": "500","message": "Internal Server Error"}}, 500
 
 
 
-    print("Verification Response:", verification_response)
-    print("Fraud Response:", fraud_response)
-    print("Book Suggestions:", book_suggestions)
+    print(f"LOG: Verification Response: {verification_response}")
+    print(f"LOG: Fraud Response: {fraud_response}")
+    print(f"LOG: Book Suggestions: {book_suggestions}")
 
     if verification_response.is_valid and fraud_response.is_valid:
         order_status_response = {
@@ -151,7 +152,8 @@ def checkout():
         'orderId': '12345',
         'status': "Order Rejected"
     }
-        
+    
+    print(f"LOG: Final response: {order_status_response}")
     return order_status_response, 200
 
 

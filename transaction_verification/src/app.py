@@ -1,3 +1,4 @@
+import datetime
 import sys
 import os
 
@@ -24,9 +25,24 @@ class TransactionVerificationService(transaction_verification_grpc.TransactionVe
             context.set_code(grpc.StatusCode.INVALID_ARGUMENT)
             context.set_details('Missing user name or contact')
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message='Missing user name or contact')
+        
         # Check is credit card number is 16 digits
         if not re.match(r'^[0-9]{16}$', request.transaction.credit_card.number): 
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Invalid credit card number.")
+        
+        
+        current_year, current_month = datetime.datetime.today().year, datetime.datetime.today().month
+        expiration_date = request.transaction.credit_card.expirationDate
+
+        expiration_month, expiration_year = map(int, expiration_date.split('/'))
+        expiration_year += 2000  # Year to correct format
+
+        # Check if credit card expiration month correctness
+        if  expiration_month > 12:
+            return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Invalid credit card expiration date.")
+        # Check if credit card is expired
+        if  (expiration_year, expiration_month) < (current_year, current_month):
+            return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Credit card is expired or .")
         return transaction_verification.VerifyTransactionResponse(is_valid=True)
 
 
