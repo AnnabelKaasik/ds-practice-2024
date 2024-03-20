@@ -32,9 +32,18 @@ def verify_transaction(transaction_data):
     # Connects to transaction verification service and sends the data to verification
     with grpc.insecure_channel('transaction_verification:50052') as channel:
         stub = transaction_verification_grpc.TransactionVerificationServiceStub(channel)
-
+        
+        #if the items is not a list, convert it to a list
+        if type(transaction_data["items"]) == dict:
+            transaction_data["items"] = [transaction_data["items"]]
+        
+        
         # Make data suitable for proto file
         transaction_data = transaction_verification.Transaction(
+            items=[transaction_verification.Item(
+                bookid=item['id'],
+                quantity=item['quantity']
+            ) for item in transaction_data['items']],
             user=transaction_verification.User(
                 name=transaction_data['user']['name'],
                 contact=transaction_data['user']['contact']
@@ -44,7 +53,7 @@ def verify_transaction(transaction_data):
                 expirationDate=transaction_data['creditCard']['expirationDate'],
                 cvv=transaction_data['creditCard']['cvv']
             )
-        )
+            )
         
         # verification request
         response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(transaction=transaction_data))
@@ -62,15 +71,6 @@ def getBookSuggestions(data):
     return response.items
 
 
-def detectFraud(data):
-    # Connect to the fraud detection service.
-    total_qty = data['items'][0]['quantity']
-    with grpc.insecure_channel('fraud_detection:50051') as channel:
-        # Create a stub object.
-        stub = fraud_detection_grpc.FraudDetectionServiceStub(channel)
-        # Call the service through the stub object.
-        response = stub.FraudDetection(fraud_detection.FraudRequest(total_qty=total_qty))
-    return response
 
 
 # Import Flask.
@@ -118,27 +118,26 @@ def checkout():
         return {"error": {"code": "400","message": f"Schema validation failed: {e}"}}, 400
     
 
-    functions = [verify_transaction, detectFraud, getBookSuggestions]
+    functions = [verify_transaction, getBookSuggestions]
     
     try:
         print("LOG: Starting paralles processing of microservices")
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=2) as executor:
             # Submit tasks to the thread pool
             futures = [executor.submit(f, data) for f in functions]
             
             # Wait for all tasks to complete
-            verification_response, fraud_response, book_suggestions = [future.result() for future in futures]
+            verification_response, book_suggestions = [future.result() for future in futures]
     except Exception as e:
         print(f"LOG: Error during paralles processing of microservices {e}")
         return {"error": {"code": "500","message": "Internal Server Error"}}, 500
 
 
 
-    print(f"LOG: Verification Response: {verification_response}")
-    print(f"LOG: Fraud Response: {fraud_response}")
+    print(f"LOG: Verification and fraud Response: {verification_response}")
     print(f"LOG: Book Suggestions: {book_suggestions}")
 
-    if verification_response.is_valid and fraud_response.is_valid:
+    if verification_response.is_valid:
         order_status_response = {
         'orderId': '12345',
         'status': "Order Approved",

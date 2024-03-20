@@ -19,7 +19,7 @@ message CreditCard {
 }
 
 message Item {
-  string name = 1;
+  string bookid = 1;
   int32 quantity = 2;
 }
 

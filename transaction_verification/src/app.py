@@ -11,11 +11,28 @@ sys.path.insert(0, utils_path)
 import transaction_verification_pb2 as transaction_verification
 import transaction_verification_pb2_grpc as transaction_verification_grpc
 
+
+utils_path2 = os.path.abspath(os.path.join(FILE, '../../../utils/pb/fraud_detection'))
+sys.path.insert(0, utils_path2)
+import fraud_detection_pb2 as fraud_detection
+import fraud_detection_pb2_grpc as fraud_detection_grpc
+
 import grpc
 from concurrent import futures
 import re
 
-
+def detectFraud(data):
+    # Connect to the fraud detection service.
+    total_qty = data.items[0].quantity
+    with grpc.insecure_channel('fraud_detection:50051') as channel:
+        # Create a stub object.
+        stub = fraud_detection_grpc.FraudDetectionServiceStub(channel)
+        # Call the service through the stub object.
+        response = stub.FraudDetection(fraud_detection.FraudRequest(total_qty=total_qty))
+        if response.is_valid:
+            return transaction_verification.VerifyTransactionResponse(is_valid=True)
+        else:
+            return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Transaction is fraud")
 
 class TransactionVerificationService(transaction_verification_grpc.TransactionVerificationServiceServicer):
     def VerifyTransaction(self, request, context):
@@ -43,7 +60,13 @@ class TransactionVerificationService(transaction_verification_grpc.TransactionVe
         # Check if credit card is expired
         if  (expiration_year, expiration_month) < (current_year, current_month):
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Credit card is expired or .")
-        return transaction_verification.VerifyTransactionResponse(is_valid=True)
+        try:
+            print("LOG: Transaction verification service called fraud detection service.")
+            return detectFraud(request.transaction)
+        except Exception as e:
+            context.set_code(grpc.StatusCode.INTERNAL)
+            context.set_details('Error: ' + str(e))
+            return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message='Error: ' + str(e))
 
 
 def serve():
