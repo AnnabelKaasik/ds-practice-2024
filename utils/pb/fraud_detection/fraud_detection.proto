@@ -6,12 +6,18 @@ service FraudDetectionService {
     rpc FraudDetection (FraudRequest) returns (FraudResponse);
 }
 
+message VectorClock {
+  map<string, int32> clock = 1;
+}
+
 message FraudRequest {
     int32 total_qty = 1;
+    VectorClock vector_clock = 2;
 
 }
 
 message FraudResponse {
     bool is_valid = 1;
     string message = 2;
+    VectorClock vector_clock = 3;
 }

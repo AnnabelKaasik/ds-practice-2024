@@ -25,12 +25,20 @@ books = {"1":{"title":"Learning Python","author":"John Smith"},
 class SuggestionsService(suggestions_service_grpc.SuggestionsServiceServicer):
     
     def getSuggestions(self, request, context):
+        # This does not get printed
+        print("LOG: Suggestions service called.")
+        request.vector_clock.clock['suggestions_service'] += 1
+        
+        print("LOG: Suggestions service vector clock updated: ", request.vector_clock)
         suggestions = [i for i in books if request.bookid != i]
         
         response = []
         for i in suggestions[:3]:
             response.append(suggestions_service.Book(bookid = i, title=books[i]["title"], author=books[i]["author"]))
-        return suggestions_service.SuggestionsResponse(items=response)
+            #   print("LOG: Suggestions service response: ", response)
+        
+        # print("LOG: final:", suggestions_service.SuggestionsResponse(items=response, vector_clock = request.vector_clock))
+        return suggestions_service.SuggestionsResponse(items=response, vector_clock = request.vector_clock)
         
     
 

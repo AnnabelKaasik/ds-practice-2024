@@ -6,6 +6,9 @@ service TransactionVerificationService {
     rpc VerifyTransaction (VerifyTransactionRequest) returns (VerifyTransactionResponse);
 }
 
+message VectorClock {
+  map<string, int32> clock = 1;
+}
 
 message User {
     string name = 1;
@@ -33,11 +36,13 @@ message Transaction {
 
 message VerifyTransactionRequest {
     Transaction transaction = 1;
+    VectorClock vector_clock = 2;
 }
 
 message VerifyTransactionResponse {
     bool is_valid = 1;
     string error_message = 2;
+    VectorClock vector_clock = 3;
 }
 
 

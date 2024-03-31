@@ -2,8 +2,14 @@ syntax = "proto3";
 
 package suggestions;
 
+
+
 service SuggestionsService {
     rpc getSuggestions (getSuggestionsRequest) returns (SuggestionsResponse);
+}
+
+message VectorClock {
+  map<string, int32> clock = 1;
 }
 
 message Book {
@@ -14,8 +20,10 @@ message Book {
 
 message getSuggestionsRequest{
     string bookid = 1;
+    VectorClock vector_clock = 2;
 }
 
 message SuggestionsResponse {
     repeated Book items = 1;
+    VectorClock vector_clock = 2;
 }

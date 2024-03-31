@@ -4,6 +4,9 @@ from concurrent.futures import ThreadPoolExecutor
 from jsonschema import validate
 import json
 
+from utils.pb.transaction_verification.transaction_verification_pb2 import VectorClock
+from utils.pb.suggestions_service.suggestions_service_pb2 import VectorClock
+
 # This set of lines are needed to import the gRPC stubs.
 # The path of the stubs is relative to the current file, or absolute inside the container.
 # Change these lines only if strictly needed.
@@ -28,7 +31,10 @@ import transaction_verification_pb2_grpc as transaction_verification_grpc
 import grpc
 
 
-def verify_transaction(transaction_data):
+def verify_transaction(transaction_data, vector_clock):
+    print('trying to verify transaction', vector_clock)
+    vector_clock.clock['transaction_verification'] += 1
+    print(f"LOG: verctor clock updated: {vector_clock}")
     # Connects to transaction verification service and sends the data to verification
     with grpc.insecure_channel('transaction_verification:50052') as channel:
         stub = transaction_verification_grpc.TransactionVerificationServiceStub(channel)
@@ -37,6 +43,7 @@ def verify_transaction(transaction_data):
         if type(transaction_data["items"]) == dict:
             transaction_data["items"] = [transaction_data["items"]]
         
+        # print(f"LOG: Transaction data: {transaction_data}")
         
         # Make data suitable for proto file
         transaction_data = transaction_verification.Transaction(
@@ -56,19 +63,38 @@ def verify_transaction(transaction_data):
             )
         
         # verification request
-        response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(transaction=transaction_data))
+        print(f"LOG: before response")
+        response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(
+            transaction=transaction_data, 
+            vector_clock = transaction_verification.VectorClock(clock=vector_clock.clock)))
+        print(f"LOG: after response")
         return response
     
 
 
-def getBookSuggestions(data):
+def getBookSuggestions(data, vector_clock):
+    # print('book suggestions', vector_clock)
+    vector_clock.clock['suggestions_service'] += 1
+    # print(f"LOG: verctor clock updated: {vector_clock}")
     id = data['items'][0]['id']
     with grpc.insecure_channel('suggestions_service:50053') as channel:
         # Create a stub object.
         stub = suggestions_service_grpc.SuggestionsServiceStub(channel)
         # Call the service through the stub object.
-        response = stub.getSuggestions(suggestions_service.getSuggestionsRequest(bookid = id))
-    return response.items
+        try:
+            # print(f"LOG: before response")
+            request = suggestions_service.getSuggestionsRequest(
+                bookid=id, 
+                vector_clock=suggestions_service.VectorClock(clock=vector_clock.clock))
+            response = stub.getSuggestions(request)
+            #  this gets printed, prblem needs to be inside the respone.
+            # print(f"LOG: after response")
+        except Exception as e:
+            print(f"ERROR: Exception in getBookSuggestions: {e}")
+            # Should I do this here???
+            return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+
+    return response.items, response.vector_clock
 
 
 
@@ -103,6 +129,8 @@ def checkout():
     """
     Responds with a JSON object containing the order ID, status, and suggested books.
     """
+    vector_clock = VectorClock(clock = {'transaction_verification': 0, 'fraud_detection': 0, 'suggestions_service': 0})
+    
     print("LOG: Recieved a POST request on /checkour endpoint")
     data = request.json
     print(f"LOG: Request data: {data}")
@@ -118,41 +146,71 @@ def checkout():
         return {"error": {"code": "400","message": f"Schema validation failed: {e}"}}, 400
     
 
-    functions = [verify_transaction, getBookSuggestions]
+    # functions = [verify_transaction, getBookSuggestions]
     
-    try:
-        print("LOG: Starting paralles processing of microservices")
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            # Submit tasks to the thread pool
-            futures = [executor.submit(f, data) for f in functions]
+    
+    # NOT ORDERED LAST SOLUTION
+
+    # try:
+    #     print("LOG: Starting paralles processing of microservices")
+    #     with ThreadPoolExecutor(max_workers=2) as executor:
+    #         # Submit tasks to the thread pool
+    #         futures = [executor.submit(f, data) for f in functions]
             
-            # Wait for all tasks to complete
-            verification_response, book_suggestions = [future.result() for future in futures]
+    #         # Wait for all tasks to complete
+    #         verification_response, book_suggestions = [future.result() for future in futures]
+    # except Exception as e:
+    #     print(f"LOG: Error during paralles processing of microservices {e}")
+    #     return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+
+
+
+    # print(f"LOG: Verification and fraud Response: {verification_response}")
+    # print(f"LOG: Book Suggestions: {book_suggestions}")
+
+    # if verification_response.is_valid:
+    #     order_status_response = {
+    #     'orderId': '12345',
+    #     'status': "Order Approved",
+    #     'suggestedBooks': [
+    #     {'bookId': book.bookid, 'title': book.title, 'author': book.author}
+    #     for book in book_suggestions
+    # ]
+    # }
+    # else:
+    #     order_status_response = {
+    #     'orderId': '12345',
+    #     'status': "Order Rejected"
+    # }
+    
+    # print(f"LOG: Final response: {order_status_response}")
+
+    # NEW VECTOR CLOCK SOLUTION
+    # Commented out verification_response for easier testing with book sugeestion
+    try:
+        print('trying hardest', vector_clock)
+        verification_response, vector_clock = verify_transaction(data, vector_clock)
+        print(f"LOG: Verification and Fraud Response: {verification_response}, {vector_clock}")
+
+        if verification_response.is_valid:
+            book_suggestions, vector_clock = getBookSuggestions(data, vector_clock)
+            print(f"LOG: Book Suggestions in orc: {book_suggestions}, {vector_clock}")
+            order_status_response = {
+                'orderId': '12345',
+                'status': "Order Approved",
+                'suggestedBooks': [
+                {'bookId': book.bookid, 'title': book.title, 'author': book.author}
+                for book in book_suggestions
+                ]
+            }
+        else:
+            order_status_response = {
+            'orderId': '12345',
+            'status': "Order Rejected"
+        }
     except Exception as e:
-        print(f"LOG: Error during paralles processing of microservices {e}")
         return {"error": {"code": "500","message": "Internal Server Error"}}, 500
 
-
-
-    print(f"LOG: Verification and fraud Response: {verification_response}")
-    print(f"LOG: Book Suggestions: {book_suggestions}")
-
-    if verification_response.is_valid:
-        order_status_response = {
-        'orderId': '12345',
-        'status': "Order Approved",
-        'suggestedBooks': [
-        {'bookId': book.bookid, 'title': book.title, 'author': book.author}
-        for book in book_suggestions
-    ]
-    }
-    else:
-        order_status_response = {
-        'orderId': '12345',
-        'status': "Order Rejected"
-    }
-    
-    print(f"LOG: Final response: {order_status_response}")
     return order_status_response, 200
 
 

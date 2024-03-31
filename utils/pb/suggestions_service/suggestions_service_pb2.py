@@ -14,19 +14,25 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19suggestions_service.proto\x12\x0bsuggestions\"5\n\x04\x42ook\x12\x0e\n\x06\x62ookid\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x0e\n\x06\x61uthor\x18\x03 \x01(\t\"\'\n\x15getSuggestionsRequest\x12\x0e\n\x06\x62ookid\x18\x01 \x01(\t\"7\n\x13SuggestionsResponse\x12 \n\x05items\x18\x01 \x03(\x0b\x32\x11.suggestions.Book2l\n\x12SuggestionsService\x12V\n\x0egetSuggestions\x12\".suggestions.getSuggestionsRequest\x1a .suggestions.SuggestionsResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x19suggestions_service.proto\x12\x0bsuggestions\"o\n\x0bVectorClock\x12\x32\n\x05\x63lock\x18\x01 \x03(\x0b\x32#.suggestions.VectorClock.ClockEntry\x1a,\n\nClockEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\x05:\x02\x38\x01\"5\n\x04\x42ook\x12\x0e\n\x06\x62ookid\x18\x01 \x01(\t\x12\r\n\x05title\x18\x02 \x01(\t\x12\x0e\n\x06\x61uthor\x18\x03 \x01(\t\"W\n\x15getSuggestionsRequest\x12\x0e\n\x06\x62ookid\x18\x01 \x01(\t\x12.\n\x0cvector_clock\x18\x02 \x01(\x0b\x32\x18.suggestions.VectorClock\"g\n\x13SuggestionsResponse\x12 \n\x05items\x18\x01 \x03(\x0b\x32\x11.suggestions.Book\x12.\n\x0cvector_clock\x18\x02 \x01(\x0b\x32\x18.suggestions.VectorClock2l\n\x12SuggestionsService\x12V\n\x0egetSuggestions\x12\".suggestions.getSuggestionsRequest\x1a .suggestions.SuggestionsResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'suggestions_service_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
   DESCRIPTOR._options = None
-  _globals['_BOOK']._serialized_start=42
-  _globals['_BOOK']._serialized_end=95
-  _globals['_GETSUGGESTIONSREQUEST']._serialized_start=97
-  _globals['_GETSUGGESTIONSREQUEST']._serialized_end=136
-  _globals['_SUGGESTIONSRESPONSE']._serialized_start=138
-  _globals['_SUGGESTIONSRESPONSE']._serialized_end=193
-  _globals['_SUGGESTIONSSERVICE']._serialized_start=195
-  _globals['_SUGGESTIONSSERVICE']._serialized_end=303
+  _globals['_VECTORCLOCK_CLOCKENTRY']._options = None
+  _globals['_VECTORCLOCK_CLOCKENTRY']._serialized_options = b'8\001'
+  _globals['_VECTORCLOCK']._serialized_start=42
+  _globals['_VECTORCLOCK']._serialized_end=153
+  _globals['_VECTORCLOCK_CLOCKENTRY']._serialized_start=109
+  _globals['_VECTORCLOCK_CLOCKENTRY']._serialized_end=153
+  _globals['_BOOK']._serialized_start=155
+  _globals['_BOOK']._serialized_end=208
+  _globals['_GETSUGGESTIONSREQUEST']._serialized_start=210
+  _globals['_GETSUGGESTIONSREQUEST']._serialized_end=297
+  _globals['_SUGGESTIONSRESPONSE']._serialized_start=299
+  _globals['_SUGGESTIONSRESPONSE']._serialized_end=402
+  _globals['_SUGGESTIONSSERVICE']._serialized_start=404
+  _globals['_SUGGESTIONSSERVICE']._serialized_end=512
 # @@protoc_insertion_point(module_scope)

@@ -17,6 +17,9 @@ from concurrent import futures
 
 class FraudDetectionService(fraud_detection_grpc.FraudDetectionServiceServicer):
     def FraudDetection(self, request, context):
+        print("LOG: Fraud detection service called.", request.vector_clock)
+        request.vector_clock.clock['fraud_detection'] += 1
+
         response = fraud_detection.FraudResponse()
         if request.total_qty > 100:
             response.is_valid = False
@@ -25,7 +28,10 @@ class FraudDetectionService(fraud_detection_grpc.FraudDetectionServiceServicer):
         else:
             response.is_valid = True
             response.message = "Transaction is valid"
-        return response
+        
+        # response.vector_clock = request.vector_clock
+        return fraud_detection.FraudResponse(is_valid=response.is_valid, message=response.message, vector_clock=request.vector_clock)
+        # return response
 
 
 def serve():
