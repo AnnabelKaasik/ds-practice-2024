@@ -64,9 +64,13 @@ def verify_transaction(transaction_data, vector_clock):
         
         # verification request
         print(f"LOG: before response")
-        response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(
-            transaction=transaction_data, 
-            vector_clock = transaction_verification.VectorClock(clock=vector_clock.clock)))
+        try:
+            response = stub.VerifyTransaction(transaction_verification.VerifyTransactionRequest(
+                transaction=transaction_data, 
+                vector_clock = transaction_verification.VectorClock(clock=vector_clock.clock)))
+        except Exception as e:
+            print(f"ERROR: Exception in verify_transaction: {e}")
+            return {"error": {"code": "500","message": "Internal Server Error"}}, 500
         print(f"LOG: after response")
         return response
     
