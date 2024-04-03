@@ -16,7 +16,7 @@ class OrderQueueServiceStub(object):
         """
         self.EnqueueOrder = channel.unary_unary(
                 '/orderqueue.OrderQueueService/EnqueueOrder',
-                request_serializer=order__queue__pb2.Order.SerializeToString,
+                request_serializer=order__queue__pb2.EnqueueRequest.SerializeToString,
                 response_deserializer=order__queue__pb2.EnqueueResponse.FromString,
                 )
 
@@ -35,7 +35,7 @@ def add_OrderQueueServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
             'EnqueueOrder': grpc.unary_unary_rpc_method_handler(
                     servicer.EnqueueOrder,
-                    request_deserializer=order__queue__pb2.Order.FromString,
+                    request_deserializer=order__queue__pb2.EnqueueRequest.FromString,
                     response_serializer=order__queue__pb2.EnqueueResponse.SerializeToString,
             ),
     }
@@ -60,7 +60,7 @@ class OrderQueueService(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/orderqueue.OrderQueueService/EnqueueOrder',
-            order__queue__pb2.Order.SerializeToString,
+            order__queue__pb2.EnqueueRequest.SerializeToString,
             order__queue__pb2.EnqueueResponse.FromString,
             options, channel_credentials,
             insecure, call_credentials, compression, wait_for_ready, timeout, metadata)

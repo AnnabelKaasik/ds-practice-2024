@@ -13,13 +13,13 @@ import order_queue_pb2_grpc as order_queue_grpc
 import grpc
 from concurrent import futures
 
-order_queue = []
+order_queue_list = []
 
 class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
-    def Enqueue(self, request, context):
+    def EnqueueOrder(self, request, context):
         print("LOG: Order queue service called.")
-        order_queue.append(request)
-        print(f"LOG: Order enqueued: {order_queue}")
+        order_queue_list.append(request)
+        print(f"LOG: Order enqueued: {order_queue_list}")
         return order_queue.EnqueueResponse(success = True, message="Order enqueued")
 
 def serve():
@@ -27,7 +27,7 @@ def serve():
     server = grpc.server(futures.ThreadPoolExecutor())
     # Add HelloService
     order_queue_grpc.add_OrderQueueServiceServicer_to_server(OrderQueueService(), server)
-    # Listen on port 50051
+    # Listen on port 50054
     port = "50054"
     server.add_insecure_port("[::]:" + port)
     # Start the server

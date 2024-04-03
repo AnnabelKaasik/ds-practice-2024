@@ -37,19 +37,23 @@ import order_queue_pb2_grpc as order_queue_grpc
 import grpc
 order_id_count = Value('i', 0)
 
-def enqueue_order(order_data):
+def enqueue_order(order_id, order_data):
     # Connects to order queue service and sends the data to queue
-    with grpc.insecure_channel('order_queue:50054') as channel:
-        stub = order_queue_grpc.OrderQueueServiceStub(channel)
-        try:
-            order_message = order_queue_grpc.Order(
-                orderId=order_data['orderId'], 
+    print(f"LOG: Enqueueing order: {order_id}")
+    try:
+        with grpc.insecure_channel('order_queue:50054') as channel:
+            stub = order_queue_grpc.OrderQueueServiceStub(channel)
+            order_message = order_queue.Order(
+                orderId=str(order_id), 
                 userName=order_data['user']['name'])
-            response = stub.Enqueue(order_queue.EnqueueRequest(order=order_message))
-        except Exception as e:
-            print(f"ERROR: Exception in enqueue_order: {e}")
-            return {"error": {"code": "500","message": "Internal Server Error"}}, 500
-        return response
+            response = stub.EnqueueOrder(order_queue.EnqueueRequest(order=order_message))
+            print(f"LOG: Order enqueued: {response}")
+            
+    except Exception as e:
+        print(f"ERROR: Exception in enqueue_order: {e}")
+        return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+
+    return response
     
 
 def verify_transaction(transaction_data, vector_clock):
@@ -113,6 +117,7 @@ def getBookSuggestions(data, vector_clock):
             print(f"ERROR: Exception in getBookSuggestions: {e}")
             # Should I do this here???
             return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+    
 
     return response
 
@@ -184,14 +189,21 @@ def checkout():
         print(f"LOG: Vector clock: {vector_clock}")
 
         if verification_response.is_valid:
-            order_status_response = {
-                'orderId': vector_clock.clock['order_id'],
-                'status': "Order Approved",
-                'suggestedBooks': [
-                {'bookId': book.bookid, 'title': book.title, 'author': book.author}
-                for book in book_suggestions_response.items
-                ]
-            }
+            queue_response = enqueue_order(vector_clock.clock['order_id'], data)
+            if queue_response.success:
+                order_status_response = {
+                    'orderId': vector_clock.clock['order_id'],
+                    'status': "Order Approved",
+                    'suggestedBooks': [
+                    {'bookId': book.bookid, 'title': book.title, 'author': book.author}
+                    for book in book_suggestions_response.items
+                    ]
+                }
+            else:
+                order_status_response = {
+                    'orderId': vector_clock.clock['order_id'],
+                    'status': "We were unable to process your order. Please try again later."
+                }
         else:
             order_status_response = {
             'orderId': vector_clock.clock['order_id'],
