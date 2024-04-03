@@ -35,22 +35,12 @@ def detectFraud(data, vector_clock):
         try:
             response = stub.FraudDetection(fraud_detection.FraudRequest(total_qty=total_qty,
                                                                         vector_clock=fraud_detection.VectorClock(clock=vector_clock.clock)))
-            if response.is_valid:
-                print("LOG: Transaction is valid.")
-                print("LOG: returned from trans verif after fraud ok", response)
-                    #   transaction_verification.VerifyTransactionResponse(is_valid=True,vector_clock = transaction_verification.VectorClock(clock=response.vector_clock.clock)))
-                
-                return response
-                # return transaction_verification.VerifyTransactionResponse(
-                #     is_valid=True,
-                #     vector_clock = transaction_verification.VectorClock(clock=response.vector_clock.clock))
-            else:
-                return transaction_verification.VerifyTransactionResponse(is_valid=False, 
-                                                                        error_message="Transaction is fraud")
+            return response
         except Exception as e:
             print(f"ERROR: Exception in detectFraud: {e}")
             return transaction_verification.VerifyTransactionResponse(is_valid=False, 
-                                                                        error_message="ERROR: Exception in detectFraud: {e}")
+                                                                        error_message="ERROR: Exception in detectFraud: {e}",
+                                                                        vector_clock=vector_clock)
 
 
 class TransactionVerificationService(transaction_verification_grpc.TransactionVerificationServiceServicer):
