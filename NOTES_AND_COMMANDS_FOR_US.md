@@ -5,3 +5,12 @@
 
 
  python -m grpc_tools.protoc -Iutils/pb/transaction_verification --python_out=utils/pb/transaction_verification --pyi_out=utils/pb/transaction_verification --grpc_python_out=utils/pb/transaction_verification utils/pb/transaction_verification/transaction_verification.proto
+
+ python -m grpc_tools.protoc -Iutils/pb/order_queue --python_out=utils/pb/order_queue --pyi_out=utils/pb/order_queue --grpc_python_out=utils/pb/order_queue utils/pb/order_queue/order_queue.proto
+
+
+
+ TÖÖTAB
+ Book suggestions, fraud,
+ 
+ Probleem: trans verif return, comment on sees

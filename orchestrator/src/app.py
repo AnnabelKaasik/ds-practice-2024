@@ -29,13 +29,34 @@ sys.path.insert(0, utils_path3)
 import transaction_verification_pb2 as transaction_verification
 import transaction_verification_pb2_grpc as transaction_verification_grpc
 
+utils_path4 = os.path.abspath(os.path.join(FILE, '../../../utils/pb/order_queue'))
+sys.path.insert(0, utils_path4)
+import order_queue_pb2 as order_queue
+import order_queue_pb2_grpc as order_queue_grpc
+
 import grpc
 order_id_count = Value('i', 0)
+import uuid
+
+def enqueue_order(order_data):
+    # Connects to order queue service and sends the data to queue
+    with grpc.insecure_channel('order_queue:50054') as channel:
+        stub = order_queue_grpc.OrderQueueServiceStub(channel)
+        try:
+            order_message = order_queue_grpc.Order(
+                orderId=order_data['orderId'], 
+                userName=order_data['user']['name'])
+            response = stub.Enqueue(order_queue.EnqueueRequest(order=order_message))
+        except Exception as e:
+            print(f"ERROR: Exception in enqueue_order: {e}")
+            return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+        return response
+    
 
 def verify_transaction(transaction_data, vector_clock):
     print('trying to verify transaction', vector_clock)
     vector_clock.clock['transaction_verification'] += 1
-    print(f"LOG: verctor clock updated: {vector_clock}")
+    # print(f"LOG: verctor clock updated: {vector_clock}")
     # Connects to transaction verification service and sends the data to verification
     with grpc.insecure_channel('transaction_verification:50052') as channel:
         stub = transaction_verification_grpc.TransactionVerificationServiceStub(channel)
@@ -210,7 +231,7 @@ def checkout():
             book_suggestions_response = getBookSuggestions(data, vector_clock)
             print(f"LOG: Book Suggestions in orc: {book_suggestions_response}")
             order_status_response = {
-                'orderId': '12345',
+                'orderId': uuid.uuid4(),
                 'status': "Order Approved",
                 'suggestedBooks': [
                 {'bookId': book.bookid, 'title': book.title, 'author': book.author}
@@ -219,7 +240,7 @@ def checkout():
             }
         else:
             order_status_response = {
-            'orderId': '12345',
+            'orderId': uuid.uuid4(),
             'status': "Order Rejected"
         }
     except Exception as e:
