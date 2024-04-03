@@ -3,6 +3,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 from jsonschema import validate
 import json
+from multiprocessing import Value
 
 from utils.pb.transaction_verification.transaction_verification_pb2 import VectorClock
 from utils.pb.suggestions_service.suggestions_service_pb2 import VectorClock
@@ -29,7 +30,7 @@ import transaction_verification_pb2 as transaction_verification
 import transaction_verification_pb2_grpc as transaction_verification_grpc
 
 import grpc
-
+order_id_count = Value('i', 0)
 
 def verify_transaction(transaction_data, vector_clock):
     print('trying to verify transaction', vector_clock)
@@ -70,7 +71,7 @@ def verify_transaction(transaction_data, vector_clock):
                 vector_clock = transaction_verification.VectorClock(clock=vector_clock.clock)))
         except Exception as e:
             print(f"ERROR: Exception in verify_transaction: {e}")
-            return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+            return {"error": {"code": "500","message": f"Internal Server Error {e}"}}, 500
         print(f"LOG: after response")
         return response
     
@@ -98,7 +99,7 @@ def getBookSuggestions(data, vector_clock):
             # Should I do this here???
             return {"error": {"code": "500","message": "Internal Server Error"}}, 500
 
-    return response.items, response.vector_clock
+    return response
 
 
 
@@ -133,7 +134,12 @@ def checkout():
     """
     Responds with a JSON object containing the order ID, status, and suggested books.
     """
-    vector_clock = VectorClock(clock = {'transaction_verification': 0, 'fraud_detection': 0, 'suggestions_service': 0})
+    with order_id_count.get_lock():
+        vector_clock = VectorClock(clock = {'order_id': order_id_count.value,
+                                            'transaction_verification': 0,
+                                            'fraud_detection': 0,
+                                            'suggestions_service': 0, })
+        order_id_count.value += 1
     
     print("LOG: Recieved a POST request on /checkour endpoint")
     data = request.json
@@ -191,20 +197,24 @@ def checkout():
 
     # NEW VECTOR CLOCK SOLUTION
     # Commented out verification_response for easier testing with book sugeestion
+    
     try:
         print('trying hardest', vector_clock)
-        verification_response, vector_clock = verify_transaction(data, vector_clock)
-        print(f"LOG: Verification and Fraud Response: {verification_response}, {vector_clock}")
+
+        verification_response = verify_transaction(data, vector_clock)
+
+            
+        print(f"LOG: Verification and Fraud Response: {verification_response}")
 
         if verification_response.is_valid:
-            book_suggestions, vector_clock = getBookSuggestions(data, vector_clock)
-            print(f"LOG: Book Suggestions in orc: {book_suggestions}, {vector_clock}")
+            book_suggestions_response = getBookSuggestions(data, vector_clock)
+            print(f"LOG: Book Suggestions in orc: {book_suggestions_response}")
             order_status_response = {
                 'orderId': '12345',
                 'status': "Order Approved",
                 'suggestedBooks': [
                 {'bookId': book.bookid, 'title': book.title, 'author': book.author}
-                for book in book_suggestions
+                for book in book_suggestions_response.items
                 ]
             }
         else:

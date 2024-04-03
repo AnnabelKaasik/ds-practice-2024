@@ -43,6 +43,8 @@ def detectFraud(data, vector_clock):
                                                                         error_message="Transaction is fraud")
         except Exception as e:
             print(f"ERROR: Exception in detectFraud: {e}")
+            return transaction_verification.VerifyTransactionResponse(is_valid=False, 
+                                                                        error_message="ERROR: Exception in detectFraud: {e}")
 
 
 class TransactionVerificationService(transaction_verification_grpc.TransactionVerificationServiceServicer):
@@ -82,9 +84,7 @@ class TransactionVerificationService(transaction_verification_grpc.TransactionVe
         try:
             print("LOG: Transaction verification service called fraud detection service.")
 
-            fraud_response, vector_clock = detectFraud(request.transaction, request.vector_clock)
-            print("LOG: Transaction verification service fraud detection service response received.")
-            return transaction_verification.VerifyTransactionResponse(is_valid=fraud_response.is_valid, error_message=fraud_response.message, vector_clock = vector_clock.clock)
+            return detectFraud(request.transaction, request.vector_clock)
         
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
