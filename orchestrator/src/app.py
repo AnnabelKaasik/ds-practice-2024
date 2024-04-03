@@ -36,7 +36,6 @@ import order_queue_pb2_grpc as order_queue_grpc
 
 import grpc
 order_id_count = Value('i', 0)
-import uuid
 
 def enqueue_order(order_data):
     # Connects to order queue service and sends the data to queue
@@ -231,7 +230,7 @@ def checkout():
             book_suggestions_response = getBookSuggestions(data, vector_clock)
             print(f"LOG: Book Suggestions in orc: {book_suggestions_response}")
             order_status_response = {
-                'orderId': uuid.uuid4(),
+                'orderId': book_suggestions_response.vector_clock.clock['order_id'],
                 'status': "Order Approved",
                 'suggestedBooks': [
                 {'bookId': book.bookid, 'title': book.title, 'author': book.author}
@@ -240,7 +239,7 @@ def checkout():
             }
         else:
             order_status_response = {
-            'orderId': uuid.uuid4(),
+            'orderId': verification_response.vector_clock.clock['order_id'],
             'status': "Order Rejected"
         }
     except Exception as e:
