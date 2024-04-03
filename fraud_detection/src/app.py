@@ -29,8 +29,11 @@ class FraudDetectionService(fraud_detection_grpc.FraudDetectionServiceServicer):
             response.is_valid = True
             response.message = "Transaction is valid"
         
+        print("LOG: Fraud detection service finished.")
+        request.vector_clock.clock['fraud_detection'] += 1
+
         response = fraud_detection.FraudResponse(is_valid=response.is_valid, message=response.message, vector_clock=fraud_detection.VectorClock(clock=request.vector_clock.clock))
-        print(f"LOG: Fraud detection response: {response}")
+
         return response
         # return response
 

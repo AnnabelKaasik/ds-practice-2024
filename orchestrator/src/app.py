@@ -53,10 +53,7 @@ def enqueue_order(order_data):
     
 
 def verify_transaction(transaction_data, vector_clock):
-    print('trying to verify transaction', vector_clock)
-    vector_clock.clock['transaction_verification'] += 1
-    # print(f"LOG: verctor clock updated: {vector_clock}")
-    # Connects to transaction verification service and sends the data to verification
+    # Connects to transaction verification service and sends the data to verify
     with grpc.insecure_channel('transaction_verification:50052') as channel:
         stub = transaction_verification_grpc.TransactionVerificationServiceStub(channel)
         
@@ -98,9 +95,7 @@ def verify_transaction(transaction_data, vector_clock):
 
 
 def getBookSuggestions(data, vector_clock):
-    # print('book suggestions', vector_clock)
-    vector_clock.clock['suggestions_service'] += 1
-    # print(f"LOG: verctor clock updated: {vector_clock}")
+
     id = data['items'][0]['id']
     with grpc.insecure_channel('suggestions_service:50053') as channel:
         # Create a stub object.
@@ -176,61 +171,21 @@ def checkout():
         return {"error": {"code": "400","message": f"Schema validation failed: {e}"}}, 400
     
 
-    # functions = [verify_transaction, getBookSuggestions]
-    
-    
-    # NOT ORDERED LAST SOLUTION
-
-    # try:
-    #     print("LOG: Starting paralles processing of microservices")
-    #     with ThreadPoolExecutor(max_workers=2) as executor:
-    #         # Submit tasks to the thread pool
-    #         futures = [executor.submit(f, data) for f in functions]
-            
-    #         # Wait for all tasks to complete
-    #         verification_response, book_suggestions = [future.result() for future in futures]
-    # except Exception as e:
-    #     print(f"LOG: Error during paralles processing of microservices {e}")
-    #     return {"error": {"code": "500","message": "Internal Server Error"}}, 500
-
-
-
-    # print(f"LOG: Verification and fraud Response: {verification_response}")
-    # print(f"LOG: Book Suggestions: {book_suggestions}")
-
-    # if verification_response.is_valid:
-    #     order_status_response = {
-    #     'orderId': '12345',
-    #     'status': "Order Approved",
-    #     'suggestedBooks': [
-    #     {'bookId': book.bookid, 'title': book.title, 'author': book.author}
-    #     for book in book_suggestions
-    # ]
-    # }
-    # else:
-    #     order_status_response = {
-    #     'orderId': '12345',
-    #     'status': "Order Rejected"
-    # }
-    
-    # print(f"LOG: Final response: {order_status_response}")
-
-    # NEW VECTOR CLOCK SOLUTION
-    # Commented out verification_response for easier testing with book sugeestion
-    
     try:
-        print('trying hardest', vector_clock)
 
-        verification_response = verify_transaction(data, vector_clock)
-
+        functions = [verify_transaction, getBookSuggestions]
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(f, data, vector_clock) for f in functions]
+            verification_response, book_suggestions_response = [future.result() for future in futures]
             
-        print(f"LOG: Verification and Fraud Response: {verification_response}")
+        for key in verification_response.vector_clock.clock.keys():
+            vector_clock.clock[key] = max(verification_response.vector_clock.clock[key], book_suggestions_response.vector_clock.clock[key])
+        
+        print(f"LOG: Vector clock: {vector_clock}")
 
         if verification_response.is_valid:
-            book_suggestions_response = getBookSuggestions(data, vector_clock)
-            print(f"LOG: Book Suggestions in orc: {book_suggestions_response}")
             order_status_response = {
-                'orderId': book_suggestions_response.vector_clock.clock['order_id'],
+                'orderId': vector_clock.clock['order_id'],
                 'status': "Order Approved",
                 'suggestedBooks': [
                 {'bookId': book.bookid, 'title': book.title, 'author': book.author}
@@ -239,11 +194,13 @@ def checkout():
             }
         else:
             order_status_response = {
-            'orderId': verification_response.vector_clock.clock['order_id'],
+            'orderId': vector_clock.clock['order_id'],
             'status': "Order Rejected"
         }
     except Exception as e:
+        print(f"LOG: Error during paralles processing of microservices {e}")
         return {"error": {"code": "500","message": "Internal Server Error"}}, 500
+       
 
     return order_status_response, 200
 

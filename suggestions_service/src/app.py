@@ -29,7 +29,6 @@ class SuggestionsService(suggestions_service_grpc.SuggestionsServiceServicer):
         print("LOG: Suggestions service called.")
         request.vector_clock.clock['suggestions_service'] += 1
         
-        print("LOG: Suggestions service vector clock updated: ", request.vector_clock)
         suggestions = [i for i in books if request.bookid != i]
         
         response = []
@@ -38,6 +37,8 @@ class SuggestionsService(suggestions_service_grpc.SuggestionsServiceServicer):
             #   print("LOG: Suggestions service response: ", response)
         
         # print("LOG: final:", suggestions_service.SuggestionsResponse(items=response, vector_clock = request.vector_clock))
+        print("LOG: Suggestions service finished.")
+        request.vector_clock.clock['suggestions_service'] += 1
         return suggestions_service.SuggestionsResponse(items=response, vector_clock = request.vector_clock)
         
     
