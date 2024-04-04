@@ -1,5 +1,6 @@
 import sys
 import os
+from collections import deque
 
 # This set of lines are needed to import the gRPC stubs.
 # The path of the stubs is relative to the current file, or absolute inside the container.
@@ -13,7 +14,7 @@ import order_queue_pb2_grpc as order_queue_grpc
 import grpc
 from concurrent import futures
 
-order_queue_list = []
+order_queue_list = deque()
 
 class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
     def EnqueueOrder(self, request, context):
