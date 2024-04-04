@@ -27,17 +27,21 @@ class DequeueResponse(_message.Message):
     def __init__(self, sending_an_order: bool = ..., order: _Optional[_Union[Order, _Mapping]] = ...) -> None: ...
 
 class Are_You_AvailableRequest(_message.Message):
-    __slots__ = ("executor_id", "leader_id")
-    EXECUTOR_ID_FIELD_NUMBER: _ClassVar[int]
+    __slots__ = ("request_from_id", "leader_id", "request_to_id")
+    REQUEST_FROM_ID_FIELD_NUMBER: _ClassVar[int]
     LEADER_ID_FIELD_NUMBER: _ClassVar[int]
-    executor_id: str
+    REQUEST_TO_ID_FIELD_NUMBER: _ClassVar[int]
+    request_from_id: str
     leader_id: str
-    def __init__(self, executor_id: _Optional[str] = ..., leader_id: _Optional[str] = ...) -> None: ...
+    request_to_id: str
+    def __init__(self, request_from_id: _Optional[str] = ..., leader_id: _Optional[str] = ..., request_to_id: _Optional[str] = ...) -> None: ...
 
 class Are_You_AvailableResponse(_message.Message):
-    __slots__ = ("executor_id", "leader_id")
+    __slots__ = ("executor_id", "leader_id", "available")
     EXECUTOR_ID_FIELD_NUMBER: _ClassVar[int]
     LEADER_ID_FIELD_NUMBER: _ClassVar[int]
+    AVAILABLE_FIELD_NUMBER: _ClassVar[int]
     executor_id: str
     leader_id: str
-    def __init__(self, executor_id: _Optional[str] = ..., leader_id: _Optional[str] = ...) -> None: ...
+    available: bool
+    def __init__(self, executor_id: _Optional[str] = ..., leader_id: _Optional[str] = ..., available: bool = ...) -> None: ...
