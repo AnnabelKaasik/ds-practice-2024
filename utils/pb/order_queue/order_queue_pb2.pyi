@@ -25,3 +25,17 @@ class EnqueueResponse(_message.Message):
     success: bool
     message: str
     def __init__(self, success: bool = ..., message: _Optional[str] = ...) -> None: ...
+
+class DequeueRequest(_message.Message):
+    __slots__ = ("executor_id",)
+    EXECUTOR_ID_FIELD_NUMBER: _ClassVar[int]
+    executor_id: str
+    def __init__(self, executor_id: _Optional[str] = ...) -> None: ...
+
+class DequeueResponse(_message.Message):
+    __slots__ = ("success", "order")
+    SUCCESS_FIELD_NUMBER: _ClassVar[int]
+    ORDER_FIELD_NUMBER: _ClassVar[int]
+    success: bool
+    order: Order
+    def __init__(self, success: bool = ..., order: _Optional[_Union[Order, _Mapping]] = ...) -> None: ...

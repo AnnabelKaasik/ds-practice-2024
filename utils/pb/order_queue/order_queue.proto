@@ -4,6 +4,7 @@ package orderqueue;
 
 service OrderQueueService {
     rpc EnqueueOrder (EnqueueRequest) returns (EnqueueResponse);
+    rpc DequeueOrder (DequeueRequest) returns (DequeueResponse);
 }
 
 message Order {
@@ -18,4 +19,13 @@ message EnqueueRequest {
 message EnqueueResponse {
     bool success = 1;
     string message = 2;
+}
+
+message DequeueRequest {
+    string executor_id = 1;
+}
+
+message DequeueResponse {
+    bool success = 1;
+    Order order = 2;
 }

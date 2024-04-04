@@ -9,6 +9,8 @@
  python -m grpc_tools.protoc -Iutils/pb/order_queue --python_out=utils/pb/order_queue --pyi_out=utils/pb/order_queue --grpc_python_out=utils/pb/order_queue utils/pb/order_queue/order_queue.proto
 
 
+ python -m grpc_tools.protoc -Iutils/pb/order_executor --python_out=utils/pb/order_executor --pyi_out=utils/pb/order_executor --grpc_python_out=utils/pb/order_executor utils/pb/order_executor/order_executor.proto
+
 
  TÖÖTAB
  Book suggestions, fraud,
