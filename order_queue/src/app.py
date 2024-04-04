@@ -23,15 +23,18 @@ from concurrent import futures
 
 order_queue_list = deque()
 leader = "50058"
+number_of_nodes = 3
+this_node = 50054
 
-def call_leader():
-    global leader
-    with grpc.insecure_channel(f'order_executor:{leader}') as channel:
-        stub = order_executor_grpc.OrderQueueServiceStub(channel)
-        response = stub.Are_You_Available(order_executor.Are_You_AvailableRequest(executor_id="init", 
-                                                                                  leader_id=leader))
-        print(response)
-    return leader
+def call_all_executors():
+    for i in range(50058, 50058 + number_of_nodes):
+        with grpc.insecure_channel(f'order_executor:{i}') as channel:
+            stub = order_executor_grpc.OrderExecutorServiceStub(channel)
+            response = stub.Are_You_Available(order_executor.Are_You_AvailableRequest(request_from_id = str(this_node),
+                                                                                      leader_id = str(leader),
+                                                                                      request_to_id = str(i)))
+            print(f"LOG: Executor {i} is available: {response.available}")
+    
 
 
 class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
@@ -66,4 +69,4 @@ def serve():
 
 if __name__ == '__main__':
     serve()
-    call_leader()
+    call_all_executors()

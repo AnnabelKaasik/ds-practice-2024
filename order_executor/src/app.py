@@ -20,17 +20,7 @@ import order_queue_pb2_grpc as order_queue_grpc
 import grpc
 from concurrent import futures
 
-leader = "50058"
-num_of_nodes = 3
-
-def find_leader():
-    global leader
-    with grpc.insecure_channel(f'order_queue:{leader}') as channel:
-        stub = order_queue_grpc.OrderQueueServiceStub(channel)
-        response = stub.Are_You_Available(order_queue.Are_You_AvailableRequest(executor_id=leader))
-        leader = response.available
-        print(f"LOG: Leader found: {leader}")
-    return leader
+this_node = ""
 
 class OrderExecutorService(order_executor.OrderExecutorServicer):
     def Dequeue(self, request, context):
@@ -46,9 +36,9 @@ class OrderExecutorService(order_executor.OrderExecutorServicer):
 
     def Are_You_Available(self, request, context):
         print("LOG: Order executor service called.")
-        print(context)
-        global leader
-        leader = request.executor_id
+        global this_node
+        this_node = request.request_to_id
+        
         return order_executor.Are_You_AvailableResponse(executor_id= context)
     
 def serve():
