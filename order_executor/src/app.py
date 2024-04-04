@@ -22,9 +22,10 @@ from concurrent import futures
 
 this_node = ""
 
-class OrderExecutorService(order_executor.OrderExecutorServicer):
+class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
+
     def Dequeue(self, request, context):
-        
+
         with grpc.insecure_channel('order_queue:50054') as channel:
             stub = order_queue_grpc.OrderQueueServiceStub(channel)
             response = stub.DequeueOrder(order_queue.DequeueRequest(executor_id=str(1)))
@@ -33,6 +34,8 @@ class OrderExecutorService(order_executor.OrderExecutorServicer):
                 return order_executor.DequeueResponse(sendind_an_order = True, order=response.order)
         
         return order_executor.DequeueResponse(sendind_an_order = False)
+    
+
 
     def Are_You_Available(self, request, context):
         print("LOG: Order executor service called.")
@@ -45,7 +48,7 @@ def serve():
     # Create a gRPC server
     server = grpc.server(futures.ThreadPoolExecutor())
     # Add HelloService
-    order_executor_grpc.add_OrderExecutorServicer_to_server(OrderExecutorService(), server)
+    order_executor_grpc.add_OrderExecutorServiceServicer_to_server(OrderExecutorService(), server)
     # Listen on port 50054
     port = "50054"
     server.add_insecure_port("[::]:" + port)
