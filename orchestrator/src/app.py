@@ -115,7 +115,6 @@ def getBookSuggestions(data, vector_clock):
             # print(f"LOG: after response")
         except Exception as e:
             print(f"ERROR: Exception in getBookSuggestions: {e}")
-            # Should I do this here???
             return {"error": {"code": "500","message": "Internal Server Error"}}, 500
     
 
