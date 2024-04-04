@@ -13,18 +13,16 @@ class Order(_message.Message):
     def __init__(self, orderId: _Optional[str] = ..., userName: _Optional[str] = ...) -> None: ...
 
 class DequeueRequest(_message.Message):
-    __slots__ = ("message",)
-    MESSAGE_FIELD_NUMBER: _ClassVar[int]
-    message: str
-    def __init__(self, message: _Optional[str] = ...) -> None: ...
+    __slots__ = ("order",)
+    ORDER_FIELD_NUMBER: _ClassVar[int]
+    order: Order
+    def __init__(self, order: _Optional[_Union[Order, _Mapping]] = ...) -> None: ...
 
 class DequeueResponse(_message.Message):
-    __slots__ = ("sending_an_order", "order")
-    SENDING_AN_ORDER_FIELD_NUMBER: _ClassVar[int]
-    ORDER_FIELD_NUMBER: _ClassVar[int]
-    sending_an_order: bool
-    order: Order
-    def __init__(self, sending_an_order: bool = ..., order: _Optional[_Union[Order, _Mapping]] = ...) -> None: ...
+    __slots__ = ("order_received",)
+    ORDER_RECEIVED_FIELD_NUMBER: _ClassVar[int]
+    order_received: bool
+    def __init__(self, order_received: bool = ...) -> None: ...
 
 class Are_You_AvailableRequest(_message.Message):
     __slots__ = ("request_from_id", "leader_id", "request_to_id")

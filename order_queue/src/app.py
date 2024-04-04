@@ -1,7 +1,7 @@
 import sys
 import os
 from collections import deque
-
+import time
 
 # This set of lines are needed to import the gRPC stubs.
 # The path of the stubs is relative to the current file, or absolute inside the container.
@@ -22,13 +22,13 @@ import grpc
 from concurrent import futures
 
 order_queue_list = deque()
-leader = "50058"
-number_of_nodes = 3
+leader = "50055"
+number_of_nodes = 1
 this_node = 50054
 
 def call_all_executors():
-    for i in range(50058, 50058 + number_of_nodes):
-        with grpc.insecure_channel(f'order_executor:{i}') as channel:
+    for j,i in zip(range(1,number_of_nodes+1),range(50055, 50055 + number_of_nodes)):
+        with grpc.insecure_channel(f'ds-practice-2024-order_executor-{j}:{i}') as channel:
             stub = order_executor_grpc.OrderExecutorServiceStub(channel)
             response = stub.Are_You_Available(order_executor.Are_You_AvailableRequest(request_from_id = str(this_node),
                                                                                       leader_id = str(leader),
@@ -49,7 +49,11 @@ class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
         print("LOG: Order queue service called.")
         if order_queue_list:
             print(f"LOG: Order dequeued: {order_queue_list}")
-            return order_queue.DequeueResponse(success = True, order=order_queue_list.pop())
+            order  = order_queue_list.pop()
+            print(order)
+            print(type(order))
+            return order_queue.DequeueResponse(success = True, order=order_queue.Order(orderId = order.order.orderId, 
+                                                                                      userName = order.order.userName))
         return order_queue.DequeueResponse(success = False)
 
 def serve():
@@ -63,10 +67,10 @@ def serve():
     # Start the server
     server.start()
     print("Server started. Listening on port 50054.")    
-    
+    time.sleep(5)
+    call_all_executors()
     # Keep thread alive
     server.wait_for_termination()
 
 if __name__ == '__main__':
     serve()
-    call_all_executors()

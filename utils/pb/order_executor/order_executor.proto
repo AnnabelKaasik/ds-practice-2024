@@ -15,12 +15,11 @@ message Order {
 }
 
 message DequeueRequest {
-    string message = 1;
+    Order order = 1;
 }
 
 message DequeueResponse {
-    bool sending_an_order = 1;
-    Order order = 2;
+    bool order_received = 1;
 }
 
 message Are_You_AvailableRequest {
