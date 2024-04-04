@@ -75,6 +75,7 @@ class TransactionVerificationService(transaction_verification_grpc.TransactionVe
         if  expiration_month > 12:
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Invalid credit card expiration date.", vector_clock = request.vector_clock)
         print("LOG: Transaction verification service credit card expiration month verified.")
+        request.vector_clock.clock['transaction_verification'] += 1
         # Check if credit card is expired
         if  (expiration_year, expiration_month) < (current_year, current_month):
             return transaction_verification.VerifyTransactionResponse(is_valid=False, error_message="Credit card is expired or .", vector_clock = request.vector_clock)
