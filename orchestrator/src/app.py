@@ -157,7 +157,8 @@ def checkout():
         vector_clock = VectorClock(clock = {'order_id': order_id_count.value,
                                             'transaction_verification': 0,
                                             'fraud_detection': 0,
-                                            'suggestions_service': 0, })
+                                            'suggestions_service': 0,
+                                            'orchestrator': 1,})
         order_id_count.value += 1
     
     print("LOG: Recieved a POST request on /checkour endpoint")
@@ -185,6 +186,7 @@ def checkout():
         for key in verification_response.vector_clock.clock.keys():
             vector_clock.clock[key] = max(verification_response.vector_clock.clock[key], book_suggestions_response.vector_clock.clock[key])
         
+        vector_clock.clock['orchestrator'] += 1
         print(f"LOG: Vector clock: {vector_clock}")
 
         if verification_response.is_valid:
