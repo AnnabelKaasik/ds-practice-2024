@@ -10,6 +10,8 @@ service OrderQueueService {
 message Order {
     string orderId = 1;
     string userName = 2;
+    string bookTitle = 3;
+    int32 quantity = 4;
 }
 
 message EnqueueRequest {

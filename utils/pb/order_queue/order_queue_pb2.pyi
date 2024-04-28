@@ -5,12 +5,16 @@ from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Opti
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Order(_message.Message):
-    __slots__ = ("orderId", "userName")
+    __slots__ = ("orderId", "userName", "bookTitle", "quantity")
     ORDERID_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    BOOKTITLE_FIELD_NUMBER: _ClassVar[int]
+    QUANTITY_FIELD_NUMBER: _ClassVar[int]
     orderId: str
     userName: str
-    def __init__(self, orderId: _Optional[str] = ..., userName: _Optional[str] = ...) -> None: ...
+    bookTitle: str
+    quantity: int
+    def __init__(self, orderId: _Optional[str] = ..., userName: _Optional[str] = ..., bookTitle: _Optional[str] = ..., quantity: _Optional[int] = ...) -> None: ...
 
 class EnqueueRequest(_message.Message):
     __slots__ = ("order",)

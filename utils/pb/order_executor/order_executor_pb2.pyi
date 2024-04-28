@@ -5,12 +5,16 @@ from typing import ClassVar as _ClassVar, Mapping as _Mapping, Optional as _Opti
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class Order(_message.Message):
-    __slots__ = ("orderId", "userName")
+    __slots__ = ("orderId", "userName", "bookTitle", "quantity")
     ORDERID_FIELD_NUMBER: _ClassVar[int]
     USERNAME_FIELD_NUMBER: _ClassVar[int]
+    BOOKTITLE_FIELD_NUMBER: _ClassVar[int]
+    QUANTITY_FIELD_NUMBER: _ClassVar[int]
     orderId: str
     userName: str
-    def __init__(self, orderId: _Optional[str] = ..., userName: _Optional[str] = ...) -> None: ...
+    bookTitle: str
+    quantity: int
+    def __init__(self, orderId: _Optional[str] = ..., userName: _Optional[str] = ..., bookTitle: _Optional[str] = ..., quantity: _Optional[int] = ...) -> None: ...
 
 class DequeueRequest(_message.Message):
     __slots__ = ("order",)
@@ -19,10 +23,12 @@ class DequeueRequest(_message.Message):
     def __init__(self, order: _Optional[_Union[Order, _Mapping]] = ...) -> None: ...
 
 class DequeueResponse(_message.Message):
-    __slots__ = ("order_received",)
+    __slots__ = ("order_received", "message")
     ORDER_RECEIVED_FIELD_NUMBER: _ClassVar[int]
+    MESSAGE_FIELD_NUMBER: _ClassVar[int]
     order_received: bool
-    def __init__(self, order_received: bool = ...) -> None: ...
+    message: str
+    def __init__(self, order_received: bool = ..., message: _Optional[str] = ...) -> None: ...
 
 class Are_You_AvailableRequest(_message.Message):
     __slots__ = ("request_from_id", "leader_id", "request_to_id")

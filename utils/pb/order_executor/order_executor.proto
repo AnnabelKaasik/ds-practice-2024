@@ -12,6 +12,8 @@ service OrderExecutorService {
 message Order {
     string orderId = 1;
     string userName = 2;
+    string bookTitle = 3;
+    int32 quantity = 4; 
 }
 
 message DequeueRequest {
@@ -20,6 +22,7 @@ message DequeueRequest {
 
 message DequeueResponse {
     bool order_received = 1;
+    string message = 2;
 }
 
 message Are_You_AvailableRequest {

@@ -40,8 +40,11 @@ def call_all_executors():
 class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
     def EnqueueOrder(self, request, context):
         print("LOG: Order queue service called.")
+        
         order_queue_list.append(request)
-        print(f"LOG: Order enqueued: {order_queue_list}")
+        # Log the entire queue or the latest enqueued order to verify
+        print(f"LOG: Order enqueued: ID: {request.order}")
+    
         return order_queue.EnqueueResponse(success = True, message="Order enqueued")
     
     
@@ -52,8 +55,12 @@ class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
             order  = order_queue_list.pop()
             print(order)
             print(type(order))
-            return order_queue.DequeueResponse(success = True, order=order_queue.Order(orderId = order.order.orderId, 
-                                                                                      userName = order.order.userName))
+            return order_queue.DequeueResponse(success = True, order=order_queue.Order(
+                orderId = order.order.orderId, 
+                userName = order.order.userName,
+                bookTitle=order.order.bookTitle,   # Added book name ans quantity
+                quantity=order.order.quantity
+                ))
         return order_queue.DequeueResponse(success = False)
 
 def serve():
