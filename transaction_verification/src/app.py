@@ -84,7 +84,9 @@ class TransactionVerificationService(transaction_verification_grpc.TransactionVe
 
         try:
             print("LOG: Transaction verification service called fraud detection service.")
-            return detectFraud(request.transaction, request.vector_clock)
+            response = detectFraud(request.transaction, request.vector_clock)
+            response.vector_clock.clock['transaction_verification'] += 1
+            return response
         
         except Exception as e:
             context.set_code(grpc.StatusCode.INTERNAL)
