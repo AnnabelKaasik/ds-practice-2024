@@ -22,6 +22,13 @@ sys.path.insert(0, utils_path3)
 import database_pb2 as database
 import database_pb2_grpc as database_grpc
 
+utils_path4 = os.path.abspath(os.path.join(FILE, '../../../utils/pb/payment_service'))
+sys.path.insert(0, utils_path4)
+import payment_service_pb2 as payment_service
+import payment_service_pb2_grpc as payment_service_grpc
+
+
+
 import grpc
 from concurrent import futures
 import random
@@ -58,6 +65,12 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
     def get_master_stub(self):
         channel = grpc.insecure_channel('master:50057')
         return database_grpc.BookDatabaseStub(channel)
+    
+    def confirm_payment(self, order_id, amount, currency):
+        with grpc.insecure_channel('payment_service:50060') as channel:
+            stub = payment_service_grpc.PaymentServiceStub(channel)
+            response = stub.ProcessPayment(payment_service.PaymentRequest(orderId=order_id, amount=amount, currency=currency))
+            return response
 
 
     def ProcessOrder(self, request, context):
@@ -112,6 +125,12 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
             print(f"Order Details - ID: {request.order.orderId}, User: {request.order.userName}, Book: {request.order.bookTitle}, Quantity: {request.order.quantity}")
              
             # Directly calling ProcessOrder here after dequeuing
+            
+            payment_service_response = self.confirm_payment(request.order.orderId, 100, "USD")
+            print(f"Payment Response: {payment_service_response.message}")
+            
+            #MARKO TEEB SIIIA KOODI JA FUNKTSIOONI ET LEIDA KAS RAAMAT ON OLEMAS VÕI MITTE JA KUI ON SIIS KUI PALJU ON JA KUI EI OLE SIIS VASTAVALT TAGASTA VASTUS
+            #JA PAYMENTI KONTROLLI KA SIIN KAS ON RAHA VÕI MITTE JA KUI ON SIIS VASTAVALT TAGASTA VASTUS JA KUI EI OLE SIIS VASTAVALT TAGASTA VASTUS 
             print("request", request)  
             process_response = self.ProcessOrder(request, context)
             print(f"Processing Response: {process_response.message}") 

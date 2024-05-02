@@ -13,6 +13,9 @@
 
   python -m grpc_tools.protoc -Iutils/pb/database --python_out=utils/pb/database --pyi_out=utils/pb/database --grpc_python_out=utils/pb/database utils/pb/database/database.proto
 
+  python -m grpc_tools.protoc -Iutils/pb/payment_service --python_out=utils/pb/payment_service --pyi_out=utils/pb/payment_service --grpc_python_out=utils/pb/payment_service utils/pb/payment_service/payment_service.proto
+
+
 
  TÖÖTAB
  Book suggestions, fraud,
