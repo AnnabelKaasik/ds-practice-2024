@@ -66,10 +66,10 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
         channel = grpc.insecure_channel('master:50057')
         return database_grpc.BookDatabaseStub(channel)
     
-    def confirm_payment(self, order_id, amount, currency):
+    def confirm_payment(self, order_id, amount, currency, commit):
         with grpc.insecure_channel('payment_service:50060') as channel:
             stub = payment_service_grpc.PaymentServiceStub(channel)
-            response = stub.ProcessPayment(payment_service.PaymentRequest(orderId=order_id, amount=amount, currency=currency))
+            response = stub.ProcessPayment(payment_service.PaymentRequest(orderId=order_id, amount=amount, currency=currency, commit=commit))
             return response
 
 
@@ -125,17 +125,20 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
             print(f"Order Details - ID: {request.order.orderId}, User: {request.order.userName}, Book: {request.order.bookTitle}, Quantity: {request.order.quantity}")
              
             # Directly calling ProcessOrder here after dequeuing
-            
-            payment_service_response = self.confirm_payment(request.order.orderId, 100, "USD")
+            #check if payment is successful
+            payment_service_response = self.confirm_payment(request.order.orderId, 100, "USD", commit=False)
             print(f"Payment Response: {payment_service_response.message}")
-            
-            #MARKO TEEB SIIIA KOODI JA FUNKTSIOONI ET LEIDA KAS RAAMAT ON OLEMAS VÕI MITTE JA KUI ON SIIS KUI PALJU ON JA KUI EI OLE SIIS VASTAVALT TAGASTA VASTUS
-            #JA PAYMENTI KONTROLLI KA SIIN KAS ON RAHA VÕI MITTE JA KUI ON SIIS VASTAVALT TAGASTA VASTUS JA KUI EI OLE SIIS VASTAVALT TAGASTA VASTUS 
-            print("request", request)  
-            process_response = self.ProcessOrder(request, context)
-            print(f"Processing Response: {process_response.message}") 
-            print("process_response", process_response)  
-            # return self.ProcessOrder(request, context)
+            database_check_response = self.database_stub.check_Write(database.BookWrite(title=request.order.bookTitle, newStock=100))
+            print(f"Database Check Response: {database_check_response.message}")
+            if payment_service_response.success and database_check_response.success:
+                print("Payment and Database check successful")
+                payment_service_response = self.confirm_payment(request.order.orderId, 100, "USD", commit=True)
+                process_response = self.ProcessOrder(request, context)
+                print(f"Process Order Response: {process_response.message}")
+            else:
+                print("Payment or Database check failed")
+                return order_executor.DequeueResponse(order_received=False, message="Failed to process order")
+
             return order_executor.DequeueResponse(order_received=True, message="Order processed successfully")
         except Exception as e:
             print(f"ERROR: Exception in Dequeue: {e}")

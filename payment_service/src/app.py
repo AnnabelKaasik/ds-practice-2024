@@ -18,7 +18,10 @@ from concurrent import futures
 class PaymentService(payment_service_grpc.PaymentServiceServicer):
     def ProcessPayment(self, request, context):
         print("LOG: Payment service called.", request.orderId)
-        return payment_service.PaymentResponse(orderId = request.orderId, success = True ,message="Payment processed successfully.")
+        if request.commit:
+            print("LOG: Payment processed successfully.")
+            return payment_service.PaymentResponse(orderId = request.orderId, success = True ,message="Payment processed successfully and committed.")
+        return payment_service.PaymentResponse(orderId = request.orderId, success = True ,message="Payment processed successfully, not committed.")
         # return response
 
 

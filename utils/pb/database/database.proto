@@ -6,6 +6,7 @@ package bookdb;
 service BookDatabase {
   rpc Read(BookRead) returns (BookStock);
   rpc Write(BookWrite) returns (UpdateAck);
+  rpc check_Write(BookWrite) returns (UpdateAck);
   rpc UpdateSlave(BookWrite) returns (UpdateAck);
 }
 

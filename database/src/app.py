@@ -144,6 +144,16 @@ class BookDatabaseService(database_grpc.BookDatabaseServicer):
         else:
             stock = self.book_stock[request.title]
             return database.BookStock(title=request.title, stock=stock)
+        
+    def check_Write(self, request, context):
+        print(f"LOG: Received write request: {request.title} - {request.newStock}")
+        if not self.is_master:
+            return database.UpdateAck(success=False, message="Write operation not allowed on slave.")
+        if not request.title:
+            return database.UpdateAck(success=False, message="Title missing in request.")
+        if not request.newStock:
+            return database.UpdateAck(success=False, message="New stock missing in request.")
+        return database.UpdateAck(success=True, message="Check passed. Write operation allowed on master.")
 
     def Write(self, request, context):
         if self.is_master:

@@ -5,14 +5,16 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 DESCRIPTOR: _descriptor.FileDescriptor
 
 class PaymentRequest(_message.Message):
-    __slots__ = ("orderId", "amount", "currency")
+    __slots__ = ("orderId", "amount", "currency", "commit")
     ORDERID_FIELD_NUMBER: _ClassVar[int]
     AMOUNT_FIELD_NUMBER: _ClassVar[int]
     CURRENCY_FIELD_NUMBER: _ClassVar[int]
+    COMMIT_FIELD_NUMBER: _ClassVar[int]
     orderId: str
     amount: float
     currency: str
-    def __init__(self, orderId: _Optional[str] = ..., amount: _Optional[float] = ..., currency: _Optional[str] = ...) -> None: ...
+    commit: bool
+    def __init__(self, orderId: _Optional[str] = ..., amount: _Optional[float] = ..., currency: _Optional[str] = ..., commit: bool = ...) -> None: ...
 
 class PaymentResponse(_message.Message):
     __slots__ = ("orderId", "success", "message")

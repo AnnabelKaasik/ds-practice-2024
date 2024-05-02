@@ -11,7 +11,8 @@ service PaymentService {
 message PaymentRequest { 
     string orderId = 1; 
     double amount = 2; 
-    string currency = 3; 
+    string currency = 3;
+    bool commit = 4;
     }
 
 message PaymentResponse { 

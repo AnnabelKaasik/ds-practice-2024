@@ -25,6 +25,11 @@ class BookDatabaseStub(object):
                 request_serializer=database__pb2.BookWrite.SerializeToString,
                 response_deserializer=database__pb2.UpdateAck.FromString,
                 )
+        self.check_Write = channel.unary_unary(
+                '/bookdb.BookDatabase/check_Write',
+                request_serializer=database__pb2.BookWrite.SerializeToString,
+                response_deserializer=database__pb2.UpdateAck.FromString,
+                )
         self.UpdateSlave = channel.unary_unary(
                 '/bookdb.BookDatabase/UpdateSlave',
                 request_serializer=database__pb2.BookWrite.SerializeToString,
@@ -48,6 +53,12 @@ class BookDatabaseServicer(object):
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
 
+    def check_Write(self, request, context):
+        """Missing associated documentation comment in .proto file."""
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
+
     def UpdateSlave(self, request, context):
         """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -64,6 +75,11 @@ def add_BookDatabaseServicer_to_server(servicer, server):
             ),
             'Write': grpc.unary_unary_rpc_method_handler(
                     servicer.Write,
+                    request_deserializer=database__pb2.BookWrite.FromString,
+                    response_serializer=database__pb2.UpdateAck.SerializeToString,
+            ),
+            'check_Write': grpc.unary_unary_rpc_method_handler(
+                    servicer.check_Write,
                     request_deserializer=database__pb2.BookWrite.FromString,
                     response_serializer=database__pb2.UpdateAck.SerializeToString,
             ),
@@ -112,6 +128,23 @@ class BookDatabase(object):
             timeout=None,
             metadata=None):
         return grpc.experimental.unary_unary(request, target, '/bookdb.BookDatabase/Write',
+            database__pb2.BookWrite.SerializeToString,
+            database__pb2.UpdateAck.FromString,
+            options, channel_credentials,
+            insecure, call_credentials, compression, wait_for_ready, timeout, metadata)
+
+    @staticmethod
+    def check_Write(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(request, target, '/bookdb.BookDatabase/check_Write',
             database__pb2.BookWrite.SerializeToString,
             database__pb2.UpdateAck.FromString,
             options, channel_credentials,
