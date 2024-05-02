@@ -79,21 +79,8 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
         book_title = request.order.bookTitle
         quantity = request.order.quantity
 
-         # Testing code:kustuta pärast ära
-        print("enne with")
-        with grpc.insecure_channel(f'master:50057') as channel:
-                stub = self.get_master_stub()
-                print("stub", stub)
-                testing = database.BookRead(title=book_title)
-                print("testing", testing)
-                # Siin on midagi perses
-                response = stub.Read(database.BookRead(title=book_title))
-                print("with shit response", response)
-
         try:
             # Check current stock from the database from master
-          
-            # THis is not working
             current_stock_response = self.database_stub.Read(database.BookRead(title=book_title))
             current_stock = current_stock_response.stock
             print(f"LOG: Current stock for {book_title} is {current_stock}")
@@ -126,17 +113,18 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
              
             # Directly calling ProcessOrder here after dequeuing
             #check if payment is successful
-            payment_service_response = self.confirm_payment(request.order.orderId, 100, "USD", commit=False)
-            print(f"Payment Response: {payment_service_response.message}")
-            database_check_response = self.database_stub.check_Write(database.BookWrite(title=request.order.bookTitle, newStock=100))
-            print(f"Database Check Response: {database_check_response.message}")
+            print("LOG: Sending orapare message to payment service and database.")
+            payment_service_response = self.confirm_payment(request.order.orderId, 3, "USD", commit=False)
+            print(f"LOG: Payment Response: {payment_service_response.message}")
+            database_check_response = self.database_stub.check_Write(database.BookWrite(title=request.order.bookTitle, newStock=request.order.quantity))
+            print(f"LOG: Database Check Response: {database_check_response.message}")
             if payment_service_response.success and database_check_response.success:
-                print("Payment and Database check successful")
-                payment_service_response = self.confirm_payment(request.order.orderId, 100, "USD", commit=True)
+                print("LOG: Payment and Database check successful, send commit message to payment service and database.")
+                payment_service_response = self.confirm_payment(request.order.orderId, 3, "USD", commit=True)
                 process_response = self.ProcessOrder(request, context)
-                print(f"Process Order Response: {process_response.message}")
+                print(f"LOG: Process Order Response: {process_response.message}")
             else:
-                print("Payment or Database check failed")
+                print("LOG: Payment or Database check failed")
                 return order_executor.DequeueResponse(order_received=False, message="Failed to process order")
 
             return order_executor.DequeueResponse(order_received=True, message="Order processed successfully")
@@ -155,7 +143,7 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
             global leader
             leader = request.leader_id
             this_node = request.request_to_id
-            print(leader, this_node)
+            # print(leader, this_node)
             return order_executor.Are_You_AvailableResponse(executor_id=this_node,
                                                             leader_id=leader,
                                                             available=True)
