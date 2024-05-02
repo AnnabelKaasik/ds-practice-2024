@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package bookdb;
+
+// The gRPC service definition for the Book Database
+service BookDatabase {
+  rpc Read(BookRead) returns (BookStock);
+  rpc Write(BookWrite) returns (UpdateAck);
+  rpc UpdateSlave(BookWrite) returns (UpdateAck);
+}
+
+// Request for reading a book's stock
+message BookRead {
+  string title = 1;
+}
+
+// Response for reading a book's stock
+message BookStock {
+  string title = 1;
+  int32 stock = 2;
+}
+
+// Request for updating a book's stock
+message BookWrite {
+  string title = 1;
+  int32 newStock = 2;
+}
+
+// Acknowledgment for a write operation
+message UpdateAck {
+  bool success = 1;
+  string message = 2;
+}

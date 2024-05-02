@@ -11,6 +11,8 @@
 
  python -m grpc_tools.protoc -Iutils/pb/order_executor --python_out=utils/pb/order_executor --pyi_out=utils/pb/order_executor --grpc_python_out=utils/pb/order_executor utils/pb/order_executor/order_executor.proto
 
+  python -m grpc_tools.protoc -Iutils/pb/database --python_out=utils/pb/database --pyi_out=utils/pb/database --grpc_python_out=utils/pb/database utils/pb/database/database.proto
+
 
  TÖÖTAB
  Book suggestions, fraud,

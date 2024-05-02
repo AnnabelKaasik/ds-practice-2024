@@ -45,7 +45,10 @@ def enqueue_order(order_id, order_data):
             stub = order_queue_grpc.OrderQueueServiceStub(channel)
             order_message = order_queue.Order(
                 orderId=str(order_id), 
-                userName=order_data['user']['name'])
+                userName=order_data['user']['name'],
+                # Added booktitle and quantity
+                bookTitle=order_data['items'][0]['name'],
+                quantity=order_data['items'][0]['quantity'])
             response = stub.EnqueueOrder(order_queue.EnqueueRequest(order=order_message))
             print(f"LOG: Order enqueued: {response}")
             
