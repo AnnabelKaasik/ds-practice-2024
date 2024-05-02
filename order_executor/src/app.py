@@ -75,7 +75,7 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
                 print("testing", testing)
                 # Siin on midagi perses
                 response = stub.Read(database.BookRead(title=book_title))
-                print("with shit response", stub)
+                print("with shit response", response)
 
         try:
             # Check current stock from the database from master
@@ -93,7 +93,7 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
 
                 if update_response.success:
                     print(f"LOG: Database updated successfully for {book_title}")
-                    return order_executor.DequeuerResponse(order_received=True, message="Order processed successfully")
+                    return order_executor.DequeueResponse(order_received=True, message="Order processed successfully")
                 else:
                     print(f"ERROR: Failed to update the stock for {book_title}")
                     return order_executor.DequeueResponse(order_received=False, message="Failed to update the stock")
