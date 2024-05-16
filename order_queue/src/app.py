@@ -49,7 +49,7 @@ class OrderQueueService(order_queue_grpc.OrderQueueServiceServicer):
     
     
     def DequeueOrder(self, request, context):
-        print("LOG: Order queue service called.")
+        print("LOG: Order queue service called. There are currently", len(order_queue_list), "orders in the queue.")
         if order_queue_list:
             print(f"LOG: Order dequeued: {order_queue_list}")
             order  = order_queue_list.pop()
