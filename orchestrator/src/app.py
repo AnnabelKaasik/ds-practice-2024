@@ -8,6 +8,51 @@ from multiprocessing import Value
 from utils.pb.transaction_verification.transaction_verification_pb2 import VectorClock
 from utils.pb.suggestions_service.suggestions_service_pb2 import VectorClock
 
+
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+from opentelemetry import metrics
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+
+# Service name is required for most backends
+resource = Resource(attributes={
+    SERVICE_NAME: "observability"
+})
+
+traceProvider = TracerProvider(resource=resource)
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://observability:4318/v1/traces"))
+traceProvider.add_span_processor(processor)
+trace.set_tracer_provider(traceProvider)
+
+reader = PeriodicExportingMetricReader(
+    OTLPMetricExporter(endpoint="http://observability:4318/v1/metrics")
+)
+meterProvider = MeterProvider(resource=resource, metric_readers=[reader])
+metrics.set_meter_provider(meterProvider)
+
+meter = metrics.get_meter("orchestrator")
+counter1 = meter.create_counter(name="total.orders.started", description="Total number of orders started")
+counter2 = meter.create_counter(name="total.orders.sent.to.queue", description="Total number of orders sent to queue")
+
+counter3 = meter.create_up_down_counter(
+        name="total.books.sold", description="Total books sold",
+    )
+
+tracer = trace.get_tracer("traces.form.orchestrator")
+histogram = meter.create_histogram(
+        name="average.order.size",
+        description="average order size",
+        unit="books",
+    )
+
+
 # This set of lines are needed to import the gRPC stubs.
 # The path of the stubs is relative to the current file, or absolute inside the container.
 # Change these lines only if strictly needed.
@@ -153,6 +198,10 @@ def index():
 
 @app.route('/checkout', methods=['POST'])
 def checkout():
+    counter1.add(1)
+    with tracer.start_as_current_span("new_order") as span:
+        span.set_attribute("data", str(request.json))
+    
     """
     Responds with a JSON object containing the order ID, status, and suggested books.
     """
@@ -203,6 +252,10 @@ def checkout():
                     for book in book_suggestions_response.items
                     ]
                 }
+                counter2.add(1)
+                number_of_books = [int(item['quantity']) for item in data['items']]
+                counter3.add(sum(number_of_books))
+                histogram.record(sum(number_of_books)*10)
             else:
                 order_status_response = {
                     'orderId': vector_clock.clock['order_id'],

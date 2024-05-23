@@ -33,6 +33,50 @@ import grpc
 from concurrent import futures
 import random
 
+
+
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
+from opentelemetry import metrics
+from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+from opentelemetry.sdk.metrics import MeterProvider
+from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+
+# Service name is required for most backends
+resource = Resource(attributes={
+    SERVICE_NAME: "observability"
+})
+
+traceProvider = TracerProvider(resource=resource)
+processor = BatchSpanProcessor(OTLPSpanExporter(endpoint="http://observability:4318/v1/traces"))
+traceProvider.add_span_processor(processor)
+trace.set_tracer_provider(traceProvider)
+
+reader = PeriodicExportingMetricReader(
+    OTLPMetricExporter(endpoint="http://observability:4318/v1/metrics")
+)
+meterProvider = MeterProvider(resource=resource, metric_readers=[reader])
+metrics.set_meter_provider(meterProvider)
+
+meter = metrics.get_meter("order_executor")
+
+tracer = trace.get_tracer("traces.form.order_executor")
+
+histogram = meter.create_histogram(
+        name="order_executor_processing_time",
+        description="average order executor processing time",
+        unit="seconds",
+    )
+counter1 = meter.create_up_down_counter(
+                name="orders.proccessed", description="orders proccessed"
+                )
+
+
 this_node = ""
 leader = "0"
 
@@ -93,6 +137,7 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
 
                 if update_response.success:
                     print(f"LOG: Database updated successfully for {book_title}")
+                    counter1.add(1)
                     return order_executor.DequeueResponse(order_received=True, message="Order processed successfully")
                 else:
                     print(f"ERROR: Failed to update the stock for {book_title}")
@@ -133,7 +178,10 @@ class OrderExecutorService(order_executor_grpc.OrderExecutorServiceServicer):
             return order_executor.DequeueResponse(order_received=False, message="Failed to process order")
         finally:
             print(f"LOG: Order received: {request.order}")
-            time.sleep(30)
+            order_pocessing_time = random.randint(5, 20)
+            histogram.record(order_pocessing_time)
+            time.sleep(order_pocessing_time)
+            
 
 
     def Are_You_Available(self, request, context):

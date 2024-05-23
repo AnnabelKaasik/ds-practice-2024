@@ -5,6 +5,8 @@ from concurrent import futures
 import json
 
 
+
+
 FILE = __file__ if '__file__' in globals() else os.getenv("PYTHONFILE", "")
 utils_path = os.path.abspath(os.path.join(FILE, '../../../utils/pb/database'))
 sys.path.insert(0, utils_path)
@@ -73,6 +75,8 @@ class BookDatabaseService(database_grpc.BookDatabaseServicer):
                 print(f"LOG: Failed to update slave: {e}")
                 success = False
         return success
+
+
 
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor())
